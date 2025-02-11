@@ -1,4 +1,4 @@
 # Daniel Whitehead
 # Feb 11, 2025
-# Green
-# I want to go to Japan
+# Daniel's favorite color is green
+# Daniel's favorite food is plantain or salmon
