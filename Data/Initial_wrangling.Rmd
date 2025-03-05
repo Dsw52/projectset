@@ -1,0 +1,51 @@
+---
+title: "Initial_Data_Wrangling"
+author: "DSW"
+date: "2025-03-05"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Wrangling
+
+```{r A horizon}
+library(readxl)
+A_horizon <- read_excel("Data/A_horizon.xls", skip=12)
+A_horizon <- A_horizon[-1, ]
+View(A_horizon)
+
+# Reference for Units
+A_horizon_reference <- read_excel("Data/A_horizon.xls", skip=11)
+View(A_horizon_reference)
+A_horizon_units <- head(A_horizon_reference, 2)
+View(A_horizon_units)
+
+```
+
+```{r C Horizon}
+C_horizon <- read_excel("Data/C_horizon.xls", skip=12)
+C_horizon <- C_horizon[-1, ]
+View(C_horizon)
+
+# Reference for Units
+C_horizon_reference <- read_excel("Data/C_horizon.xls", skip=11)
+View(C_horizon_reference)
+C_horizon_units <- head(C_horizon_reference, 2)
+View(C_horizon_units)
+```
+
+```{r Topsoil}
+Topsoil <- read_excel("Data/Topsoil.xls", skip=12)
+Topsoil <- Topsoil[-1, ]
+View(Topsoil)
+
+# Reference for Units
+Topsoil_reference <- read_excel("Data/C_horizon.xls", skip=11)
+View(Topsoil_reference)
+Topsoil_units <- head(Topsoil_reference, 2)
+View(Topsoil_units)
+```
+
