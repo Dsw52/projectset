@@ -1,0 +1,105 @@
+---
+title: "Project Code"
+author: "DSW"
+date: "2025-03-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load packages
+```{r}
+library(here)
+library(tidyverse)
+library(dunn.test)
+library(gt)
+library(paletteer)
+library(moments)
+library(dplyr)
+library(vcdExtra)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(readxl)
+```
+
+# Wrangling
+
+```{r A horizon}
+A_horizon <- read_excel("Data/A_horizon.xls", skip=12)
+A_horizon <- A_horizon[-1, ]
+View(A_horizon)
+
+# Reference for Units
+A_horizon_reference <- read_excel("Data/A_horizon.xls", skip=11)
+View(A_horizon_reference)
+A_horizon_units <- head(A_horizon_reference, 2)
+View(A_horizon_units)
+
+```
+
+
+
+# Initial Figures
+```{r}
+A_states <- A_horizon %>%
+  filter(StateID %in% c("NC", "SC", "VA", "GA", "FL"))
+
+# View the filtered data
+head(A_states)
+```
+
+## Figure 1: Land Cover Frequency by State
+```{r Figure 1}
+landcover_counts <- A_states %>%
+  group_by(StateID, LandCover1) %>%
+  summarize(count = n(), .groups = "drop")
+
+# Create the bar plot
+ggplot(landcover_counts, aes(x = StateID, y = count, fill = LandCover1)) +
+  geom_bar(stat = "identity", position = "dodge") +  # 'dodge' makes the bars for each state side by side
+  labs(
+    title = "Land Cover Frequency by State",
+    x = "State",
+    y = "Sites",
+    fill = "Land Cover Type"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotates the x-axis labels for better readability
+```
+
+## Figure 2: (In progress) Total Nutrient Abundance Across States
+```{r}
+# Convert relevant columns to numeric (direct conversion)
+A_states$A_C_Tot <- as.numeric(A_states$A_C_Tot)
+A_states$A_Ca <- as.numeric(A_states$A_Ca)
+A_states$A_Mg <- as.numeric(A_states$A_Mg)
+A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead of A_Kaolinit
+A_states$A_P <- as.numeric(A_states$A_P)
+A_states$A_S <- as.numeric(A_states$A_S)
+
+# Now reshape the data into long format for plotting
+A_states_long <- A_states %>%
+  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, A_P, A_S),
+               names_to = "Nutrient", values_to = "Abundance")
+
+# Sum the abundances by nutrient
+A_states_sum <- A_states_long %>%
+  group_by(StateID, Nutrient) %>%
+  summarize(Total_Abundance = sum(Abundance, na.rm = TRUE))
+
+# Create a bar chart using ggplot
+ggplot(A_states_sum, aes(x = State_ID, y = Total_Abundance, fill = Nutrient)) +
+  geom_bar(stat = "identity", .groups = "drop") +
+  labs(title = "Total Nutrient Abundance Across States",
+       x = "Nutrient",
+       y = "Total Abundance",
+       fill = "Nutrient") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
