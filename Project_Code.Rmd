@@ -70,16 +70,21 @@ landcover_counts <- A_states %>%
   summarize(count = n(), .groups = "drop")
 
 # Create the bar plot
-ggplot(landcover_counts, aes(x = StateID, y = count, fill = LandCover1)) +
+landcover_count <- ggplot(landcover_counts, aes(x = StateID, y = count, fill = LandCover1)) +
   geom_bar(stat = "identity", position = "dodge") +  # 'dodge' makes the bars for each state side by side
   labs(
     title = "Land Cover Frequency by State",
     x = "State",
-    y = "Sites",
+    y = "Number of Sites",
     fill = "Land Cover Type"
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotates the x-axis labels for better readability
+ggsave(landcover_count,
+       filename = "landcover_count.jpg",
+       height = 12,
+       width = 15,
+       units = "cm")
 ```
 
 ## Figure 2: (In progress) Total Nutrient Abundance Across States
@@ -103,25 +108,35 @@ A_states_sum <- A_states_long %>%
   summarize(Total_Abundance = sum(Abundance, na.rm = TRUE))
 
 # Create a bar chart using ggplot
-ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
+Nut_by_state_bar <-ggplot(A_macros_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
   geom_bar(stat = "identity", .groups = "drop") +
-  labs(title = "Total Nutrient Abundance Across States",
+  labs(title = "Total Macronutrient Abundance Across States",
        x = "State",
        y = "Total Abundance (% weight)",
        fill = "Nutrient") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-Nut_by_state_bar <-ggplot(A_macros_sum_noP, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
+Nut_by_state_bar_noP <- ggplot(A_macros_sum_noP, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
   geom_bar(stat = "identity", .groups = "drop") +
-  labs(title = "Total Nutrient Abundance Across States",
+  labs(title = "Total Macronutrient Abundance Across States, exluding Phosphorus",
        x = "State",
        y = "Total Abundance (% weight)",
        fill = "Nutrient") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 Nut_by_state_bar
-
+Nut_by_state_bar_noP
+ggsave(Nut_by_state_bar,
+       filename = "nut_by_state_bar.jpg",
+       height = 12,
+       width = 15,
+       units = "cm")
+ggsave(Nut_by_state_bar_noP,
+       filename = "nut_by_state_bar_noP.jpg",
+       height = 12,
+       width = 15,
+       units = "cm")
 ```
 
 ## Figure 3: Nutrient status by land use type
@@ -186,16 +201,27 @@ nutrient_ls_bar <- ggplot(A_macros_sum, aes(x = Nutrient, y = Total_Abundance, f
        title = "Soil Macronutrient Totals by Land Status Type")+
   scale_fill_viridis(discrete = TRUE)
 nutrient_ls_bar
-
-nutrient_ls_bar <- ggplot(A_macros_sum_noP, aes(x = Nutrient, y = Total_Abundance, fill = Nutrient))+
+#  caption = "Figure 1: Soil macronutrient sum values based on Land status type only including data from Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database."
+nutrient_ls_bar_noP <- ggplot(A_macros_sum_noP, aes(x = Nutrient, y = Total_Abundance, fill = Nutrient))+
   geom_bar(stat = "identity", .groups = "drop")+
   facet_wrap(vars(LandCover1), nrow = 2)+
   theme_bw()+ 
   labs(x = "Nutrient",
        y = "Total Sum (% Weight)",
-       title = "Soil Macronutrient Totals by Land Status Type (excluding")+
+       title = "Soil Macronutrient Totals by Land Status Type (excluding P)")+
   scale_fill_viridis(discrete = TRUE)
-nutrient_ls_bar
+nutrient_ls_bar_noP
+# caption = "Figure 2: Soil macronutrient sum values, excluding Phosporus to display the lesser occuring macronutrients based on Land status type only including data from Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database."
+ggsave(nutrient_ls_bar,
+       filename = "nutrient_ls_bar.jpg",
+       height = 12,
+       width = 15,
+       units = "cm")
+ggsave(nutrient_ls_bar_noP,
+       filename = "nutrient_ls_bar_noP.jpg",
+       height = 12,
+       width = 15,
+       units = "cm")
 ```
 
 
