@@ -1,0 +1,255 @@
+---
+title: "Project Code"
+author: "DSW"
+date: "2025-03-13"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Load packages
+```{r}
+library(here)
+library(tidyverse)
+library(dunn.test)
+library(gt)
+library(paletteer)
+library(moments)
+library(dplyr)
+library(vcdExtra)
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(readxl)
+library(leaflet)
+library(readr)
+library(htmlwidgets)
+library(webshot2)
+library(ggspatial)
+library(sf)
+library(maps)
+```
+
+# Wrangling
+
+```{r A horizon}
+A_horizon <- read_excel("Data/A_horizon.xls", skip=12)
+A_horizon <- A_horizon[-1, ]
+View(A_horizon)
+
+# Reference for Units
+A_horizon_reference <- read_excel("Data/A_horizon.xls", skip=11)
+View(A_horizon_reference)
+A_horizon_units <- head(A_horizon_reference, 2)
+View(A_horizon_units)
+
+```
+
+
+
+# Initial Figures
+```{r}
+A_states <- A_horizon %>%
+  filter(StateID %in% c("NC", "SC", "VA", "GA", "FL"))
+
+# View the filtered data
+head(A_states)
+```
+
+## Figure 1: Land Cover Frequency by State
+```{r Figure 1}
+landcover_counts <- A_states %>%
+  group_by(StateID, LandCover1) %>%
+  summarize(count = n(), .groups = "drop")
+
+# Create the bar plot
+ggplot(landcover_counts, aes(x = StateID, y = count, fill = LandCover1)) +
+  geom_bar(stat = "identity", position = "dodge") +  # 'dodge' makes the bars for each state side by side
+  labs(
+    title = "Land Cover Frequency by State",
+    x = "State",
+    y = "Sites",
+    fill = "Land Cover Type"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotates the x-axis labels for better readability
+```
+
+## Figure 2: (In progress) Total Nutrient Abundance Across States
+```{r}
+# Convert relevant columns to numeric (direct conversion)
+A_states$A_C_Tot <- as.numeric(A_states$A_C_Tot)
+A_states$A_Ca <- as.numeric(A_states$A_Ca)
+A_states$A_Mg <- as.numeric(A_states$A_Mg)
+A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead of A_Kaolinit
+A_states$A_P <- as.numeric(A_states$A_P)
+A_states$A_S <- as.numeric(A_states$A_S)
+
+# Now reshape the data into long format for plotting
+A_states_long <- A_states %>%
+  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, A_P, A_S),
+               names_to = "Nutrient", values_to = "Abundance")
+
+# Sum the abundances by nutrient
+A_states_sum <- A_states_long %>%
+  group_by(StateID, Nutrient) %>%
+  summarize(Total_Abundance = sum(Abundance, na.rm = TRUE))
+
+# Create a bar chart using ggplot
+ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
+  geom_bar(stat = "identity", .groups = "drop") +
+  labs(title = "Total Nutrient Abundance Across States",
+       x = "Nutrient",
+       y = "Total Abundance",
+       fill = "Nutrient") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+## Figure 3: Nutrient status by land use type
+```{r}
+# Examine snout-to-fork length by reach.
+trout_fig3 <- ggplot(A_states, aes(x = A_Ca, fill = LandCover1)) + # base plot
+  geom_histogram() + # creates histograms
+  scale_fill_manual(values = c("darkorange", "purple", "cyan4")) + # customize colors
+  labs(x = "Snout-to-fork Length (mm)",
+       y = "Count") + # edits labels
+  facet_grid(.~reach) + # facets by reach to avoid overlap
+  theme_bw() + # removes the grey background
+  theme(legend.position = "none") # removes the legend
+
+# View figure.
+trout_fig3
+```
+
+```{r}
+trout_fig4 <- ggplot() +
+  # add raw data points
+  geom_jitter(data = A_states,
+              aes(x = LandCover1, y = A_K,
+                  color = LandCover1), size = 0.5) +
+  # edit colors
+  scale_color_manual(values = c("darkorange", "purple", "cyan4", "blue", "lightgreen","red" )) +
+  # label axes
+  #labs(x = "Reach Section",
+       #y = "Snout-to-fork Length (mm)") +
+  # remove grey bg
+  theme_bw() +
+  theme(legend.position = "none")
+
+trout_fig4
+```
+
+## Figure 4: Site map
+### method (1): leaflet map
+```{r}
+A_states$Longitude <- as.numeric(A_states$Longitude)
+A_states$Latitude <- as.numeric(A_states$Latitude)
+
+pal <- colorFactor(
+  palette = c("darkorange", "darkgreen", "cyan4", "blue", "brown","purple"),
+  domain = A_states$LandCover1
+)
+
+# Create the map
+map <- leaflet(A_states) %>%
+  # Add base map tiles
+  addTiles() %>%
+  # Set the initial view to center on your data
+  setView(
+    lng = mean(A_states$Longitude),
+    lat = mean(A_states$Latitude),
+    zoom = 5
+  ) %>%
+  # Add markers for each point
+  addCircleMarkers(
+    lng = ~Longitude,
+    lat = ~Latitude,
+    radius = 2,
+    #radius = ~value/5,    # Size based on value
+    #popup = ~paste("<b>", name, "</b><br>Category: ", category, "<br>Value: ", value),
+    #label = ~name,
+    color = ~pal(LandCover1),
+    #fillOpacity = 0.8,
+    stroke = TRUE,
+    weight = 1
+  ) %>%
+  # Add a legend
+  addLegend(
+    position = "bottomright",
+    pal = pal,
+    values = ~LandCover1,
+    title = "Land Cover Type",
+    #opacity = 0.7
+  )
+
+# Display the map
+map
+
+# First save as HTML
+temp_html <- tempfile(fileext = ".html")
+saveWidget(map, file = temp_html, selfcontained = TRUE)
+
+# Then convert to PNG
+webshot2::webshot(
+  url = temp_html,
+  file = "site_map.png",
+  delay = 5,  # Wait for map to fully load
+  zoom = 2    # For higher resolution
+)
+
+```
+
+### method (2): ggspatial
+```{r}
+# Convert to sf object
+points_sf <- st_as_sf(A_states, coords = c("Longitude", "Latitude"), crs = 4326)
+
+# Get background map data
+usa_map <- map_data("usa")
+state_map <- map_data("state")
+world_map <- map_data("world")
+
+# Create a static map using ggplot2
+map <- ggplot() +
+  # Add world base map
+  #geom_polygon(data = world_map, aes(x = long, y = lat, group = group), 
+               #fill = "white", color = "gray70", size = 0.2) +
+  geom_polygon(data = state_map, aes(x = long, y = lat, group = group),
+               fill = NA, color = "gray70", size = 0.3) +
+  # Add points with category color and value size
+  geom_point(data = A_states, aes(x = Longitude, y = Latitude, fill = LandCover1),
+             size = 1, shape = 21, color = "black") +
+  # Styling
+  scale_fill_manual(values = c("darkorange", "green", "indianred2", "blue", "pink","purple"),
+                     name = "Land Cover Types") +
+  #scale_size_continuous(name = "Value", range = c(3, 6)) +
+  # Focus map on our data
+  coord_sf(xlim = c(min(A_states$Longitude) - 2, max(A_states$Longitude) + 2),
+           ylim = c(min(A_states$Latitude) - 1, max(A_states$Latitude) + 1)) +
+  # Add map elements
+  annotation_scale(location = "br") +
+  annotation_north_arrow(location = "tl", style = north_arrow_fancy_orienteering) +
+  # Theme and labels
+  theme_minimal() +
+  labs(title = "Soil Sampling Sites by Land Cover Type",
+       caption = "Map showing soil sampling sites (n = 382) in the southeastern U.S. by land cover types",
+       x = "Longitude", y = "Latitude") +
+  theme(
+    panel.background = element_rect(fill = "white", color = "white"), # White background
+    plot.background = element_rect(fill = "white", color = "white"), # White plot background
+    #panel.grid.major = element_blank(), # Optional: remove gridlines
+    #panel.grid.minor = element_blank()  # Optional: remove minor gridlines
+  )
+
+
+print(map)
+
+ggsave("site_map_uniform.png", map, dpi = 300)
+
+```
+
