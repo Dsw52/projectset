@@ -64,7 +64,7 @@ head(A_states)
 ```
 
 ## Figure 1: Land Cover Frequency by State
-```{r Figure 1}
+```{r Figure 1, fig.cap= "Land status sample type in Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database.}
 landcover_counts <- A_states %>%
   group_by(StateID, LandCover1) %>%
   summarize(count = n(), .groups = "drop")
@@ -80,6 +80,7 @@ landcover_count <- ggplot(landcover_counts, aes(x = StateID, y = count, fill = L
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotates the x-axis labels for better readability
+landcover_count
 ggsave(landcover_count,
        filename = "landcover_count.jpg",
        height = 12,
@@ -96,10 +97,13 @@ A_states$A_Mg <- as.numeric(A_states$A_Mg)
 A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead of A_Kaolinit
 A_states$A_P <- as.numeric(A_states$A_P)
 A_states$A_S <- as.numeric(A_states$A_S)
+A_states <- A_states %>%
+  mutate(A_P = A_P*10000) %>%
+  mutate(P = P*10000)
 
 # Now reshape the data into long format for plotting
 A_states_long <- A_states %>%
-  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, A_P, A_S),
+  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, P, A_S),
                names_to = "Nutrient", values_to = "Abundance")
 
 # Sum the abundances by nutrient
@@ -119,7 +123,7 @@ Nut_by_state_bar <-ggplot(A_macros_sum, aes(x = StateID, y = Total_Abundance, fi
 
 Nut_by_state_bar_noP <- ggplot(A_macros_sum_noP, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
   geom_bar(stat = "identity", .groups = "drop") +
-  labs(title = "Total Macronutrient Abundance Across States, exluding Phosphorus",
+  labs(title = "Total Macronutrient Abundance Across States (exluding P)",
        x = "State",
        y = "Total Abundance (% weight)",
        fill = "Nutrient") +
@@ -135,7 +139,7 @@ ggsave(Nut_by_state_bar,
 ggsave(Nut_by_state_bar_noP,
        filename = "nut_by_state_bar_noP.jpg",
        height = 12,
-       width = 15,
+       width = 17,
        units = "cm")
 ```
 
@@ -159,13 +163,13 @@ trout_fig3
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
-  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
+  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg, P) %>%
   rename(K = A_Tot_K_fs,
          Ca = A_Ca,
          S = A_S,
          C = A_C_Tot,
-         Mg = A_Mg,
-         P = A_P)
+         Mg = A_Mg
+        )
 
 A_macros_long <- A_macros %>%
   pivot_longer(cols = c(C, Ca, Mg, K, P, S),
