@@ -98,7 +98,7 @@ A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead
 A_states$A_P <- as.numeric(A_states$A_P)
 A_states$A_S <- as.numeric(A_states$A_S)
 A_states <- A_states %>%
-  mutate(A_P = A_P*10000)
+  mutate(A_P = A_P/10000)
 
 # Now reshape the data into long format for plotting
 A_states_long <- A_states %>%
@@ -355,3 +355,9 @@ print(map)
 ggsave("site_map_uniform.png", map, dpi = 300)
 
 ```
+
+## ANOVA 
+
+## Linear Regression
+
+## Confidence Interval, T-test
