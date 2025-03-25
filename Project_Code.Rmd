@@ -98,12 +98,11 @@ A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead
 A_states$A_P <- as.numeric(A_states$A_P)
 A_states$A_S <- as.numeric(A_states$A_S)
 A_states <- A_states %>%
-  mutate(A_P = A_P*10000) %>%
-  mutate(P = P*10000)
+  mutate(A_P = A_P*10000)
 
 # Now reshape the data into long format for plotting
 A_states_long <- A_states %>%
-  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, P, A_S),
+  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, A_P, A_S),
                names_to = "Nutrient", values_to = "Abundance")
 
 # Sum the abundances by nutrient
@@ -112,7 +111,7 @@ A_states_sum <- A_states_long %>%
   summarize(Total_Abundance = sum(Abundance, na.rm = TRUE))
 
 # Create a bar chart using ggplot
-Nut_by_state_bar <-ggplot(A_macros_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
+Nut_by_state_bar <-ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
   geom_bar(stat = "identity", .groups = "drop") +
   labs(title = "Total Macronutrient Abundance Across States",
        x = "State",
@@ -121,7 +120,7 @@ Nut_by_state_bar <-ggplot(A_macros_sum, aes(x = StateID, y = Total_Abundance, fi
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-Nut_by_state_bar_noP <- ggplot(A_macros_sum_noP, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
+Nut_by_state_bar_noP <- ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
   geom_bar(stat = "identity", .groups = "drop") +
   labs(title = "Total Macronutrient Abundance Across States (exluding P)",
        x = "State",
@@ -163,12 +162,13 @@ trout_fig3
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
-  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg, P) %>%
+  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
   rename(K = A_Tot_K_fs,
          Ca = A_Ca,
          S = A_S,
          C = A_C_Tot,
-         Mg = A_Mg
+         Mg = A_Mg,
+         P = A_P
         )
 
 A_macros_long <- A_macros %>%
