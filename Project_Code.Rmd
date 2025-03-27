@@ -231,6 +231,23 @@ ggsave(nutrient_ls_bar_noP,
        units = "cm")
 ```
 
+# Mean macronutrients by land cover type
+```{r}
+A_macros_mean <- A_macros_long %>%
+  group_by(StateID, LandCover1, Nutrient) %>%
+  summarize(Mean_Abundance = mean(Abundance, na.rm = TRUE))
+
+nutrient_ls_bar <- ggplot(A_macros_mean, aes(x = Nutrient, y = Mean_Abundance, fill = Nutrient))+
+  geom_bar(stat = "identity", .groups = "drop")+
+  facet_wrap(vars(LandCover1), nrow = 2)+
+  theme_bw()+ 
+  labs(x = "Nutrient",
+       y = "Mean Abundance (% Weight)",
+       title = "Soil Macronutrient Totals by Land Status Type")+
+  scale_fill_viridis(discrete = TRUE)
+nutrient_ls_bar
+```
+
 
 ```{r}
 trout_fig4 <- ggplot() +
