@@ -32,6 +32,9 @@ library(ggspatial)
 library(sf)
 library(maps)
 library(viridis)
+library(broom)
+library(tidyr)
+library(e1071)
 ```
 
 # Wrangling
@@ -356,7 +359,212 @@ ggsave("site_map_uniform.png", map, dpi = 300)
 
 ```
 
-## ANOVA 
+# Assessing Normality 
+
+## Shapiro Wilk Test
+
+```{r normality shapiro wilk test}
+# Shapiro-Wilk test for Carbon (C)
+shapiro_C <- shapiro.test(A_macros_long$Abundance[A_macros_long$Nutrient == "C"])
+shapiro_C_tidy <- tidy(shapiro_C)
+
+# Shapiro-Wilk test for Calcium (Ca)
+shapiro_Ca <- shapiro.test(A_macros_long$Abundance[A_macros_long$Nutrient == "Ca"])
+shapiro_Ca_tidy <- tidy(shapiro_Ca)
+
+# Shapiro-Wilk test for Magnesium (Mg)
+shapiro_Mg <- shapiro.test(A_macros_long$Abundance[A_macros_long$Nutrient == "Mg"])
+shapiro_Mg_tidy <- tidy(shapiro_Mg)
+
+# Shapiro-Wilk test for Potassium (K)
+shapiro_K <- shapiro.test(A_macros_long$Abundance[A_macros_long$Nutrient == "K"])
+shapiro_K_tidy <- tidy(shapiro_K)
+
+# Shapiro-Wilk test for Phosphorus (P)
+shapiro_P <- shapiro.test(A_macros_long$Abundance[A_macros_long$Nutrient == "P"])
+shapiro_P_tidy <- tidy(shapiro_P)
+
+# Shapiro-Wilk test for Sulfur (S)
+shapiro_S <- shapiro.test(A_macros_long$Abundance[A_macros_long$Nutrient == "S"])
+shapiro_S_tidy <- tidy(shapiro_S)
+
+normality_results <- bind_rows(
+  shapiro_C_tidy %>% mutate(Nutrient = "C"),
+  shapiro_Ca_tidy %>% mutate(Nutrient = "Ca"),
+  shapiro_Mg_tidy %>% mutate(Nutrient = "Mg"),
+  shapiro_K_tidy %>% mutate(Nutrient = "K"),
+  shapiro_P_tidy %>% mutate(Nutrient = "P"),
+  shapiro_S_tidy %>% mutate(Nutrient = "S")
+)
+
+print(normality_results)
+```
+```{r skewness and kurtosis}
+abundance_C <- A_macros_long$Abundance[A_macros_long$Nutrient == "C"] %>% na.omit()
+if(length(unique(abundance_C)) > 1) {
+  skew_C <- skewness(abundance_C)
+  kurt_C <- kurtosis(abundance_C)
+} else {
+  skew_C <- kurt_C <- NA
+}
+
+# Skewness and Kurtosis for Calcium (Ca)
+abundance_Ca <- A_macros_long$Abundance[A_macros_long$Nutrient == "Ca"] %>% na.omit()
+if(length(unique(abundance_Ca)) > 1) {
+  skew_Ca <- skewness(abundance_Ca)
+  kurt_Ca <- kurtosis(abundance_Ca)
+} else {
+  skew_Ca <- kurt_Ca <- NA
+}
+
+# Skewness and Kurtosis for Magnesium (Mg)
+abundance_Mg <- A_macros_long$Abundance[A_macros_long$Nutrient == "Mg"] %>% na.omit()
+if(length(unique(abundance_Mg)) > 1) {
+  skew_Mg <- skewness(abundance_Mg)
+  kurt_Mg <- kurtosis(abundance_Mg)
+} else {
+  skew_Mg <- kurt_Mg <- NA
+}
+
+# Skewness and Kurtosis for Potassium (K)
+abundance_K <- A_macros_long$Abundance[A_macros_long$Nutrient == "K"] %>% na.omit()
+if(length(unique(abundance_K)) > 1) {
+  skew_K <- skewness(abundance_K)
+  kurt_K <- kurtosis(abundance_K)
+} else {
+  skew_K <- kurt_K <- NA
+}
+
+# Skewness and Kurtosis for Phosphorus (P)
+abundance_P <- A_macros_long$Abundance[A_macros_long$Nutrient == "P"] %>% na.omit()
+if(length(unique(abundance_P)) > 1) {
+  skew_P <- skewness(abundance_P)
+  kurt_P <- kurtosis(abundance_P)
+} else {
+  skew_P <- kurt_P <- NA
+}
+
+# Skewness and Kurtosis for Sulfur (S)
+abundance_S <- A_macros_long$Abundance[A_macros_long$Nutrient == "S"] %>% na.omit()
+if(length(unique(abundance_S)) > 1) {
+  skew_S <- skewness(abundance_S)
+  kurt_S <- kurtosis(abundance_S)
+} else {
+  skew_S <- kurt_S <- NA
+}
+
+skew_kurt_results <- data.frame(
+  Nutrient = c("C", "Ca", "Mg", "K", "P", "S"),
+  Skewness = c(skew_C, skew_Ca, skew_Mg, skew_K, skew_P, skew_S),
+  Kurtosis = c(kurt_C, kurt_Ca, kurt_Mg, kurt_K, kurt_P, kurt_S)
+)
+
+# View the results
+print
+
+```
+
+## Normality Histograms
+
+```{r normality plots}
+
+create_histogram <- function(nutrient_name) {
+  # Filter data for the selected nutrient
+  nutrient_data <- A_macros_long %>%
+    filter(Nutrient == nutrient_name) %>%
+    na.omit()
+
+  # creating the histogram plot
+  hist_plot <- ggplot(nutrient_data, aes(x = Abundance, fill = LandCover1)) +
+    geom_histogram(binwidth = 0.1, color = "black", position = "dodge") +  # Adjust binwidth as needed
+    labs(title = paste("Distribution of", nutrient_name, "Abundance by LandCover1"),
+         x = paste(nutrient_name, "Abundance"),
+         y = "Frequency",
+         caption = paste("Figure: Distribution of", nutrient_name, "Abundance by LandCover1")) +
+    scale_fill_manual(values = c("LandCover1_Value1" = "skyblue", "LandCover1_Value2" = "salmon")) +  # Replace with actual values for LandCover1
+    theme_minimal() +
+    theme(legend.position = "right") + 
+    facet_grid(. ~ LandCover1)  # Faceting by LandCover1 for each plot
+
+  return(hist_plot)
+}
+
+
+plot_C <- create_histogram("C")
+plot_Ca <- create_histogram("Ca")
+plot_Mg <- create_histogram("Mg")
+plot_K <- create_histogram("K")
+plot_P <- create_histogram("P")
+plot_S <- create_histogram("S")
+
+# Print each plot
+print(plot_C)
+print(plot_Ca)
+print(plot_Mg)
+print(plot_K)
+print(plot_P)
+print(plot_S)
+
+```
+
+## Log Transformed Normality
+
+```{r Log Transformed Normality}
+
+create_log_transformed_histogram <- function(nutrient_name) {
+  nutrient_data <- A_macros_long %>%
+    filter(Nutrient == nutrient_name) %>%
+    na.omit() %>%
+    mutate(log_Abundance = log(Abundance + 1))  # log transform (adding 1 to avoid log(0))
+
+  # creating the histogram plot
+  hist_plot <- ggplot(nutrient_data, aes(x = log_Abundance, fill = LandCover1)) +
+    geom_histogram(binwidth = 0.1, color = "black", position = "dodge") 
+    labs(title = paste("Log-Transformed Distribution of", nutrient_name, "Abundance by LandCover1"),
+         x = paste("Log-transformed", nutrient_name, "Abundance"),
+         y = "Frequency",
+         caption = paste("Figure: Log-transformed Distribution of", nutrient_name, "Abundance by LandCover1")) +
+    scale_fill_manual(values = c("LandCover1_Value1" = "skyblue", "LandCover1_Value2" = "salmon")) +  # Replace with actual values for LandCover1
+    theme_minimal() +
+    theme(legend.position = "right") + 
+    facet_grid(. ~ LandCover1)  # Faceting by LandCover1 for each plot
+
+  return(hist_plot)
+}
+
+plot_log_C <- create_log_transformed_histogram("C")
+plot_log_Ca <- create_log_transformed_histogram("Ca")
+plot_log_Mg <- create_log_transformed_histogram("Mg")
+plot_log_K <- create_log_transformed_histogram("K")
+plot_log_P <- create_log_transformed_histogram("P")
+plot_log_S <- create_log_transformed_histogram("S")
+
+print(plot_log_C)
+print(plot_log_Ca)
+print(plot_log_Mg)
+print(plot_log_K)
+print(plot_log_P)
+print(plot_log_S)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## Linear Regression
 
