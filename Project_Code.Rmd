@@ -329,7 +329,7 @@ map <- ggplot() +
                fill = NA, color = "gray70", size = 0.3) +
   # Add points with category color and value size
   geom_point(data = A_states, aes(x = Longitude, y = Latitude, color = LandCover1),
-             size = 1.5, shape = 16)+
+             size = 1.2, shape = 16)+
   # Styling
   scale_color_manual(values = c("darkorange", "green", "indianred2", "blue", "pink","purple"),
                      name = "Land Cover Types") +
@@ -354,7 +354,7 @@ map <- ggplot() +
 
 print(map)
 
-#ggsave("site_map_uniform.png", map, dpi = 300)
+ggsave("site_map_uniform.png", map, dpi = 300)
 
 ```
 
