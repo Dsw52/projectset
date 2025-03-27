@@ -459,8 +459,7 @@ skew_kurt_results <- data.frame(
   Kurtosis = c(kurt_C, kurt_Ca, kurt_Mg, kurt_K, kurt_P, kurt_S)
 )
 
-# View the results
-print
+
 
 ```
 
@@ -515,11 +514,10 @@ create_log_transformed_histogram <- function(nutrient_name) {
   nutrient_data <- A_macros_long %>%
     filter(Nutrient == nutrient_name) %>%
     na.omit() %>%
-    mutate(log_Abundance = log(Abundance + 1))  # log transform (adding 1 to avoid log(0))
+    mutate(log_Abundance = log(Abundance + 1)) 
 
-  # creating the histogram plot
   hist_plot <- ggplot(nutrient_data, aes(x = log_Abundance, fill = LandCover1)) +
-    geom_histogram(binwidth = 0.1, color = "black", position = "dodge") 
+    geom_histogram(binwidth = 0.1, color = "black", position = "dodge") +  
     labs(title = paste("Log-Transformed Distribution of", nutrient_name, "Abundance by LandCover1"),
          x = paste("Log-transformed", nutrient_name, "Abundance"),
          y = "Frequency",
@@ -527,10 +525,11 @@ create_log_transformed_histogram <- function(nutrient_name) {
     scale_fill_manual(values = c("LandCover1_Value1" = "skyblue", "LandCover1_Value2" = "salmon")) +  # Replace with actual values for LandCover1
     theme_minimal() +
     theme(legend.position = "right") + 
-    facet_grid(. ~ LandCover1)  # Faceting by LandCover1 for each plot
+    facet_grid(. ~ LandCover1) 
 
   return(hist_plot)
 }
+
 
 plot_log_C <- create_log_transformed_histogram("C")
 plot_log_Ca <- create_log_transformed_histogram("Ca")
@@ -548,7 +547,64 @@ print(plot_log_S)
 
 ```
 
+```{r Shapiro Test after log}
 
+shapiro_test_log <- function(nutrient_name) {
+  nutrient_data <- A_macros_long %>%
+    filter(Nutrient == nutrient_name) %>%
+    na.omit() %>%
+    mutate(log_Abundance = log(Abundance + 1))  
+
+  shapiro_result <- shapiro.test(nutrient_data$log_Abundance)
+
+  return(data.frame(Nutrient = nutrient_name, 
+                    W_statistic = shapiro_result$statistic, 
+                    p_value = shapiro_result$p.value))
+}
+
+shapiro_results_log <- bind_rows(
+  shapiro_test_log("C"),
+  shapiro_test_log("Ca"),
+  shapiro_test_log("Mg"),
+  shapiro_test_log("K"),
+  shapiro_test_log("P"),
+  shapiro_test_log("S")
+)
+
+print(shapiro_results_log)
+
+```
+
+```{r shapiro double log}
+
+shapiro_test_double_log <- function(nutrient_name) {
+  nutrient_data <- A_macros_long %>%
+    filter(Nutrient == nutrient_name) %>%
+    na.omit() %>%
+    mutate(log_Abundance = log(Abundance + 1),  # First log transformation
+           log_log_Abundance = log(log_Abundance + 1))  # Second log transformation
+  
+  # Perform the Shapiro-Wilk test on the second log-transformed data
+  shapiro_result <- shapiro.test(nutrient_data$log_log_Abundance)
+
+  # Return the result (p-value and W statistic)
+  return(data.frame(Nutrient = nutrient_name, 
+                    W_statistic = shapiro_result$statistic, 
+                    p_value = shapiro_result$p.value))
+}
+
+shapiro_results_double_log <- bind_rows(
+  shapiro_test_double_log("C"),
+  shapiro_test_double_log("Ca"),
+  shapiro_test_double_log("Mg"),
+  shapiro_test_double_log("K"),
+  shapiro_test_double_log("P"),
+  shapiro_test_double_log("S")
+)
+
+print(shapiro_results_double_log)
+
+```
 
 
 
