@@ -328,17 +328,16 @@ map <- ggplot() +
   geom_polygon(data = state_map, aes(x = long, y = lat, group = group),
                fill = NA, color = "gray70", size = 0.3) +
   # Add points with category color and value size
-  geom_point(data = A_states, aes(x = Longitude, y = Latitude, fill = LandCover1),
-             size = 1, shape = 21, color = "black") +
+  geom_point(data = A_states, aes(x = Longitude, y = Latitude, color = LandCover1),
+             size = 1.5, shape = 16)+
   # Styling
-  scale_fill_manual(values = c("darkorange", "green", "indianred2", "blue", "pink","purple"),
+  scale_color_manual(values = c("darkorange", "green", "indianred2", "blue", "pink","purple"),
                      name = "Land Cover Types") +
   #scale_size_continuous(name = "Value", range = c(3, 6)) +
   # Focus map on our data
   coord_sf(xlim = c(min(A_states$Longitude) - 2, max(A_states$Longitude) + 2),
            ylim = c(min(A_states$Latitude) - 1, max(A_states$Latitude) + 1)) +
   # Add map elements
-  annotation_scale(location = "br") +
   annotation_north_arrow(location = "tl", style = north_arrow_fancy_orienteering) +
   # Theme and labels
   theme_minimal() +
@@ -355,7 +354,7 @@ map <- ggplot() +
 
 print(map)
 
-ggsave("site_map_uniform.png", map, dpi = 300)
+#ggsave("site_map_uniform.png", map, dpi = 300)
 
 ```
 
