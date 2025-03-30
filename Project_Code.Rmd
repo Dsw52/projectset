@@ -97,7 +97,8 @@ ggsave(landcover_count,
 A_states$A_C_Tot <- as.numeric(A_states$A_C_Tot)
 A_states$A_Ca <- as.numeric(A_states$A_Ca)
 A_states$A_Mg <- as.numeric(A_states$A_Mg)
-A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead of A_Kaolinit
+#A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs) # Use A_Tot_K_fs instead of A_Kaolinit
+A_states$A_K <- as.numeric(A_states$A_K) # No, we should use A_K instead of A_Tot_K_fs
 A_states$A_P <- as.numeric(A_states$A_P)
 A_states$A_S <- as.numeric(A_states$A_S)
 A_states <- A_states %>%
@@ -105,7 +106,7 @@ A_states <- A_states %>%
 
 # Now reshape the data into long format for plotting
 A_states_long <- A_states %>%
-  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, A_P, A_S),
+  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K, A_P, A_S),
                names_to = "Nutrient", values_to = "Abundance")
 
 # Sum the abundances by nutrient
@@ -166,7 +167,7 @@ trout_fig3
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
   select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
-  rename(K = A_Tot_K_fs,
+  rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
          C = A_C_Tot,
@@ -185,7 +186,7 @@ A_macros_sum <- A_macros_long %>%
 #without P
 A_macros_noP <- A_states %>%
   select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg) %>%
-  rename(K = A_Tot_K_fs,
+  rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
          C = A_C_Tot,
