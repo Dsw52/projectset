@@ -146,22 +146,7 @@ ggsave(Nut_by_state_bar_noP,
        units = "cm")
 ```
 
-## Figure 3: Nutrient status by land use type
-```{r}
-# Examine nutrients and landstatus occurence
- trout_fig3 <- ggplot(A_states, aes(x = A_Ca, fill = LandCover1)) + # base plot
-  geom_histogram() + # creates histograms
-  scale_fill_manual(values = c("darkorange", "purple", "cyan4","green4","red4", "pink3")) + # customize colors
-  labs(x = "Occurence of Ca (% wt)",
-       y = "Count") + # edits labels
-  facet_grid(.~LandCover1) + # facets by reach to avoid overlap
-  theme_bw() + # removes the grey background
-  theme(legend.position = "none") # removes the legend
-
-# View figure.
-trout_fig3
-```
-
+# Original bar plots (Now I think the boxplots underneath look better)
 ```{r}
 
 #narrowing the dataset to just macro nutrients
@@ -265,86 +250,8 @@ macronutrient_box1 <- ggplot(A_macros_long, aes(x = LandCover1, y = Abundance, f
 macronutrient_box1
 ```
 
-
-```{r}
-trout_fig4 <- ggplot() +
-  # add raw data points
-  geom_jitter(data = A_states,
-              aes(x = LandCover1, y = A_K,
-                  color = LandCover1), size = 0.5) +
-  # edit colors
-  scale_color_manual(values = c("darkorange", "purple", "cyan4", "blue", "lightgreen","red" )) +
-  # label axes
-  #labs(x = "Reach Section",
-       #y = "Snout-to-fork Length (mm)") +
-  # remove grey bg
-  theme_bw() +
-  theme(legend.position = "none")
-
-trout_fig4
-```
-
 ## Figure 4: Site map
-### method (1): leaflet map
-```{r}
-A_states$Longitude <- as.numeric(A_states$Longitude)
-A_states$Latitude <- as.numeric(A_states$Latitude)
 
-pal <- colorFactor(
-  palette = c("darkorange", "darkgreen", "cyan4", "blue", "brown","purple"),
-  domain = A_states$LandCover1
-)
-
-# Create the map
-map <- leaflet(A_states) %>%
-  # Add base map tiles
-  addTiles() %>%
-  # Set the initial view to center on your data
-  setView(
-    lng = mean(A_states$Longitude),
-    lat = mean(A_states$Latitude),
-    zoom = 5
-  ) %>%
-  # Add markers for each point
-  addCircleMarkers(
-    lng = ~Longitude,
-    lat = ~Latitude,
-    radius = 2,
-    #radius = ~value/5,    # Size based on value
-    #popup = ~paste("<b>", name, "</b><br>Category: ", category, "<br>Value: ", value),
-    #label = ~name,
-    color = ~pal(LandCover1),
-    #fillOpacity = 0.8,
-    stroke = TRUE,
-    weight = 1
-  ) %>%
-  # Add a legend
-  addLegend(
-    position = "bottomright",
-    pal = pal,
-    values = ~LandCover1,
-    title = "Land Cover Type",
-    #opacity = 0.7
-  )
-
-# Display the map
-map
-
-# First save as HTML
-temp_html <- tempfile(fileext = ".html")
-saveWidget(map, file = temp_html, selfcontained = TRUE)
-
-# Then convert to PNG
-webshot2::webshot(
-  url = temp_html,
-  file = "site_map.png",
-  delay = 5,  # Wait for map to fully load
-  zoom = 2    # For higher resolution
-)
-
-```
-
-### method (2): ggspatial
 ```{r}
 # Convert to sf object
 points_sf <- st_as_sf(A_states, coords = c("Longitude", "Latitude"), crs = 4326)
