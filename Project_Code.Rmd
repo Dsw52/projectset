@@ -808,19 +808,29 @@ plot(prism_p)
 lat <- 40.7128
 lon <- -74.0060
 
-crs(prism_t)
+A_macros$Longitude <- as.numeric(A_macros$Longitude)
+A_macros$Latitude <- as.numeric(A_macros$Latitude)
 
-point_wgs84 <- vect(cbind(lon, lat), crs = "EPSG:4326")
-crs(point_wgs84)
-point_nad83 <- project(point_wgs84, crs(prism_t))
+# Define the coordinates
+coords <- A_macros %>%
+  select(Longitude, Latitude)
+ # rename(x = Longitude, y = Latitude)
 
-# Create a spatial point
-point <- c(lon, lat)
+coords <- data.frame(coords)
 
-# Extract the value at the point from the raster
-value_at_point <- extract(prism_t, point_nad83)
+points <- vect(coords, geom=c("Longitude", "Latitude"), crs = "EPSG:4326")
+print(points)
 
-# Print the extracted value (e.g., temperature, precipitation, etc.)
-print(value_at_point)
+points_nad83 <- project(points, crs(prism_t))
+
+print(points_nad83)
+
+extracted_t <- extract(prism_t, points_nad83)
+extracted_p <- extract(prism_p, points_nad83)
+print(extracted_values)
+
+A_macros_tp <- A_macros %>%
+  mutate(temperature = extracted_t,
+         precipitation = extracted_p)
 ```
 
