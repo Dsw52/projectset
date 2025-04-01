@@ -305,8 +305,137 @@ ggsave("site_map_uniform.png", map, dpi = 300)
 # Confidence Interval
 
 ```{r}
+# filter the dataset by four land cover types
+forest_macro <- A_macros %>%
+  filter(LandCover1 == "Forested Upland")
 
+developed_macro <- A_macros %>%
+  filter(LandCover1 == "Developed")
+
+herbaceous_macro <- A_macros %>%
+  filter(LandCover1 == "Herbaceous Upland")
+
+cultivated_macro <- A_macros %>%
+  filter(LandCover1 == "Planted/Cultivated")
 ```
+
+### Calculate 95% CI for each macronutrient by land cover
+```{r}
+# Carbon
+forest_C_test <- t.test(forest_macro$C, conf.level = 0.95)
+
+forest_C_test
+
+developed_C_test <- t.test(developed_macro$C, conf.level = 0.95)
+
+developed_C_test
+
+herbaceous_C_test <- t.test(herbaceous_macro$C, conf.level = 0.95)
+
+herbaceous_C_test
+
+cultivated_C_test <- t.test(cultivated_macro$C, conf.level = 0.95)
+
+cultivated_C_test
+```
+
+```{r}
+# Ca
+forest_Ca_test <- t.test(forest_macro$Ca, conf.level = 0.95)
+
+forest_Ca_test
+
+developed_Ca_test <- t.test(developed_macro$Ca, conf.level = 0.95)
+
+developed_Ca_test
+
+herbaceous_Ca_test <- t.test(herbaceous_macro$Ca, conf.level = 0.95)
+
+herbaceous_Ca_test
+
+cultivated_Ca_test <- t.test(cultivated_macro$Ca, conf.level = 0.95)
+
+cultivated_Ca_test
+```
+
+```{r}
+# K
+forest_K_test <- t.test(forest_macro$K, conf.level = 0.95)
+
+forest_K_test
+
+developed_K_test <- t.test(developed_macro$K, conf.level = 0.95)
+
+developed_K_test
+
+herbaceous_K_test <- t.test(herbaceous_macro$K, conf.level = 0.95)
+
+herbaceous_K_test
+
+cultivated_K_test <- t.test(cultivated_macro$K, conf.level = 0.95)
+
+cultivated_K_test
+```
+
+```{r}
+# Mg
+forest_Mg_test <- t.test(forest_macro$Mg, conf.level = 0.95)
+
+forest_Mg_test
+
+developed_Mg_test <- t.test(developed_macro$Mg, conf.level = 0.95)
+
+developed_Mg_test
+
+herbaceous_Mg_test <- t.test(herbaceous_macro$Mg, conf.level = 0.95)
+
+herbaceous_Mg_test
+
+cultivated_Mg_test <- t.test(cultivated_macro$Mg, conf.level = 0.95)
+
+cultivated_Mg_test
+```
+
+```{r}
+# P
+forest_P_test <- t.test(forest_macro$P, conf.level = 0.95)
+
+forest_P_test
+
+developed_P_test <- t.test(developed_macro$P, conf.level = 0.95)
+
+developed_P_test
+
+herbaceous_P_test <- t.test(herbaceous_macro$P, conf.level = 0.95)
+
+herbaceous_P_test
+
+cultivated_P_test <- t.test(cultivated_macro$P, conf.level = 0.95)
+
+cultivated_P_test
+```
+
+```{r}
+# S
+forest_S_test <- t.test(forest_macro$S, conf.level = 0.95)
+
+forest_S_test
+
+developed_S_test <- t.test(developed_macro$S, conf.level = 0.95)
+
+developed_S_test
+
+herbaceous_S_test <- t.test(herbaceous_macro$S, conf.level = 0.95)
+
+herbaceous_S_test
+
+cultivated_S_test <- t.test(cultivated_macro$S, conf.level = 0.95)
+
+cultivated_S_test
+
+print(cultivated_S_test$conf.int)
+```
+
 
 
 # Assessing Normality 
