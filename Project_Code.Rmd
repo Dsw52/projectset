@@ -253,6 +253,9 @@ macronutrient_box1
 ## Figure 4: Site map
 
 ```{r}
+# Make long & lat numeric
+A_states$Longitude <- as.numeric(A_states$Longitude)
+A_states$Latitude <- as.numeric(A_states$Latitude)
 # Convert to sf object
 points_sf <- st_as_sf(A_states, coords = c("Longitude", "Latitude"), crs = 4326)
 
@@ -298,6 +301,13 @@ print(map)
 ggsave("site_map_uniform.png", map, dpi = 300)
 
 ```
+
+# Confidence Interval
+
+```{r}
+
+```
+
 
 # Assessing Normality 
 
@@ -564,4 +574,6 @@ print(shapiro_results_double_log)
 
 ## Linear Regression
 
-## Confidence Interval, T-test
+## Confidence Interval
+
+
