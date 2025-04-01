@@ -35,6 +35,9 @@ library(viridis)
 library(broom)
 library(tidyr)
 library(e1071)
+library(prism)
+library(terra)
+library(sp)
 ```
 
 # Wrangling
@@ -151,7 +154,7 @@ ggsave(Nut_by_state_bar_noP,
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
-  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
+  select(SiteID, StateID, CollDate, Longitude, Latitude, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
   rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
@@ -755,9 +758,9 @@ print(shapiro_results_double_log)
 
 ## Anova and Tukey
 
-```{r}
+### Anova and Tukey C
 
-
+```{r Anova and Tukey C}
 # Run ANOVA for "C"
 nutrient_C <- A_macros_long %>%
   filter(Nutrient == "C") %>%
@@ -772,7 +775,11 @@ print(summary_C)
 tukey_C <- TukeyHSD(anova_C)
 print("Tukey HSD for C:")
 print(tukey_C)
+```
 
+### Anova and Tukey Ca
+
+```{r Anova and Tukey Ca}
 # Run ANOVA for "Ca"
 nutrient_Ca <- A_macros_long %>%
   filter(Nutrient == "Ca") %>%
@@ -787,7 +794,11 @@ print(summary_Ca)
 tukey_Ca <- TukeyHSD(anova_Ca)
 print("Tukey HSD for Ca:")
 print(tukey_Ca)
+```
 
+### Anova and Tukey Mg
+
+```{r Anova and Tukey Mg}
 # Run ANOVA for "Mg"
 nutrient_Mg <- A_macros_long %>%
   filter(Nutrient == "Mg") %>%
@@ -802,7 +813,11 @@ print(summary_Mg)
 tukey_Mg <- TukeyHSD(anova_Mg)
 print("Tukey HSD for Mg:")
 print(tukey_Mg)
+```
 
+### Anova and Tukey K
+
+```{r Anova and Tukey K}
 # Run ANOVA for "K"
 nutrient_K <- A_macros_long %>%
   filter(Nutrient == "K") %>%
@@ -817,7 +832,11 @@ print(summary_K)
 tukey_K <- TukeyHSD(anova_K)
 print("Tukey HSD for K:")
 print(tukey_K)
+```
 
+### Anova and Tukey P
+
+```{r Anova and Tukey P}
 # Run ANOVA for "P"
 nutrient_P <- A_macros_long %>%
   filter(Nutrient == "P") %>%
@@ -832,7 +851,11 @@ print(summary_P)
 tukey_P <- TukeyHSD(anova_P)
 print("Tukey HSD for P:")
 print(tukey_P)
+```
 
+### Anova and Tukey S
+
+```{r Anova and Tukey S}
 # Run ANOVA for "S"
 nutrient_S <- A_macros_long %>%
   filter(Nutrient == "S") %>%
@@ -847,15 +870,13 @@ print(summary_S)
 tukey_S <- TukeyHSD(anova_S)
 print("Tukey HSD for S:")
 print(tukey_S)
-
-
 ```
 
 ## Kruskal Wallis and Dunn Tests
 
 #### Kruskal-Wallis and Dunn's Test for Nutrient C
 
-```{r}
+```{r Kruskal-Wallis and Dunn's Test for Nutrient C}
 nutrient_C <- A_macros_long %>%
   filter(Nutrient == "C") %>%
   na.omit()
@@ -872,7 +893,7 @@ print(dunn_C)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient Ca
 
-```{r}
+```{r Kruskal-Wallis and Dunn's Test for Nutrient Ca}
 nutrient_Ca <- A_macros_long %>%
   filter(Nutrient == "Ca") %>%
   na.omit()
@@ -889,7 +910,7 @@ print(dunn_Ca)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient Mg
 
-```{r}
+```{r Kruskal-Wallis and Dunn's Test for Nutrient Mg}
 nutrient_Mg <- A_macros_long %>%
   filter(Nutrient == "Mg") %>%
   na.omit()
@@ -907,7 +928,7 @@ print(dunn_Mg)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient K
 
-```{r}
+```{r Kruskal-Wallis and Dunn's Test for Nutrient K}
 nutrient_K <- A_macros_long %>%
   filter(Nutrient == "K") %>%
   na.omit()
@@ -924,7 +945,7 @@ print(dunn_K)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient P
 
-```{r}
+```{r Kruskal-Wallis and Dunn's Test for Nutrient P}
 nutrient_P <- A_macros_long %>%
   filter(Nutrient == "P") %>%
   na.omit()
@@ -941,7 +962,7 @@ print(dunn_P)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient S
 
-```{r}
+```{r Kruskal-Wallis and Dunn's Test for Nutrient S}
 nutrient_S <- A_macros_long %>%
   filter(Nutrient == "S") %>%
   na.omit()
@@ -964,6 +985,53 @@ print(dunn_S)
 
 ## Linear Regression
 
-## Confidence Interval
+### Download mean temperature and precipitation data as potential independent
+### variables in the multiple linear regression.
+```{r}
+# Set download directory
+prism_set_dl_dir('./Data')
+# Download temperature data for a specific region
+get_prism_normals(type = "tmean", 
+                resolution = "4km",  # 4km spatial resolution (choose "4km" or "800m")
+                #mon = 1:12,
+                annual = TRUE,
+                keepZip = FALSE)
 
+get_prism_normals(type = "ppt", 
+                resolution = "4km",  # 4km spatial resolution (choose "4km" or "800m")
+                #mon = 1:12,
+                annual = TRUE,
+                keepZip = FALSE)
+```
+
+```{r}
+prism_t <- rast("./Data/PRISM_tmean_30yr_normal_4kmM5_annual_bil/PRISM_tmean_30yr_normal_4kmM5_annual_bil.bil")
+prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_normal_4kmM4_annual_bil.bil")
+```
+
+```{r}
+plot(prism_t)
+plot(prism_p)
+```
+
+```{r}
+# Define the coordinates (e.g., New York City)
+lat <- 40.7128
+lon <- -74.0060
+
+crs(prism_t)
+
+point_wgs84 <- vect(cbind(lon, lat), crs = "EPSG:4326")
+crs(point_wgs84)
+point_nad83 <- project(point_wgs84, crs(prism_t))
+
+# Create a spatial point
+point <- c(lon, lat)
+
+# Extract the value at the point from the raster
+value_at_point <- extract(prism_t, point_nad83)
+
+# Print the extracted value (e.g., temperature, precipitation, etc.)
+print(value_at_point)
+```
 
