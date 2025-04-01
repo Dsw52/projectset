@@ -753,16 +753,209 @@ print(shapiro_results_double_log)
 
 ```
 
+## Anova and Tukey
+
+```{r}
 
 
+# Run ANOVA for "C"
+nutrient_C <- A_macros_long %>%
+  filter(Nutrient == "C") %>%
+  na.omit()
+
+anova_C <- aov(Abundance ~ LandCover1, data = nutrient_C)
+summary_C <- summary(anova_C)
+print("ANOVA Result for C:")
+print(summary_C)
+
+# Perform Tukey HSD for "C"
+tukey_C <- TukeyHSD(anova_C)
+print("Tukey HSD for C:")
+print(tukey_C)
+
+# Run ANOVA for "Ca"
+nutrient_Ca <- A_macros_long %>%
+  filter(Nutrient == "Ca") %>%
+  na.omit()
+
+anova_Ca <- aov(Abundance ~ LandCover1, data = nutrient_Ca)
+summary_Ca <- summary(anova_Ca)
+print("ANOVA Result for Ca:")
+print(summary_Ca)
+
+# Perform Tukey HSD for "Ca"
+tukey_Ca <- TukeyHSD(anova_Ca)
+print("Tukey HSD for Ca:")
+print(tukey_Ca)
+
+# Run ANOVA for "Mg"
+nutrient_Mg <- A_macros_long %>%
+  filter(Nutrient == "Mg") %>%
+  na.omit()
+
+anova_Mg <- aov(Abundance ~ LandCover1, data = nutrient_Mg)
+summary_Mg <- summary(anova_Mg)
+print("ANOVA Result for Mg:")
+print(summary_Mg)
+
+# Perform Tukey HSD for "Mg"
+tukey_Mg <- TukeyHSD(anova_Mg)
+print("Tukey HSD for Mg:")
+print(tukey_Mg)
+
+# Run ANOVA for "K"
+nutrient_K <- A_macros_long %>%
+  filter(Nutrient == "K") %>%
+  na.omit()
+
+anova_K <- aov(Abundance ~ LandCover1, data = nutrient_K)
+summary_K <- summary(anova_K)
+print("ANOVA Result for K:")
+print(summary_K)
+
+# Perform Tukey HSD for "K"
+tukey_K <- TukeyHSD(anova_K)
+print("Tukey HSD for K:")
+print(tukey_K)
+
+# Run ANOVA for "P"
+nutrient_P <- A_macros_long %>%
+  filter(Nutrient == "P") %>%
+  na.omit()
+
+anova_P <- aov(Abundance ~ LandCover1, data = nutrient_P)
+summary_P <- summary(anova_P)
+print("ANOVA Result for P:")
+print(summary_P)
+
+# Perform Tukey HSD for "P"
+tukey_P <- TukeyHSD(anova_P)
+print("Tukey HSD for P:")
+print(tukey_P)
+
+# Run ANOVA for "S"
+nutrient_S <- A_macros_long %>%
+  filter(Nutrient == "S") %>%
+  na.omit()
+
+anova_S <- aov(Abundance ~ LandCover1, data = nutrient_S)
+summary_S <- summary(anova_S)
+print("ANOVA Result for S:")
+print(summary_S)
+
+# Perform Tukey HSD for "S"
+tukey_S <- TukeyHSD(anova_S)
+print("Tukey HSD for S:")
+print(tukey_S)
 
 
+```
+
+## Kruskal Wallis and Dunn Tests
+
+#### Kruskal-Wallis and Dunn's Test for Nutrient C
+
+```{r}
+nutrient_C <- A_macros_long %>%
+  filter(Nutrient == "C") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for C
+kruskal_C <- kruskal.test(Abundance ~ LandCover1, data = nutrient_C)
+print("Kruskal-Wallis Test Result for C:")
+print(kruskal_C)
+
+dunn_C <- dunn.test(nutrient_C$Abundance, nutrient_C$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_C)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient Ca
+
+```{r}
+nutrient_Ca <- A_macros_long %>%
+  filter(Nutrient == "Ca") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for Ca
+kruskal_Ca <- kruskal.test(Abundance ~ LandCover1, data = nutrient_Ca)
+print("Kruskal-Wallis Test Result for Ca:")
+print(kruskal_Ca)
+
+dunn_Ca <- dunn.test(nutrient_Ca$Abundance, nutrient_Ca$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_Ca)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient Mg
+
+```{r}
+nutrient_Mg <- A_macros_long %>%
+  filter(Nutrient == "Mg") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for Mg
+kruskal_Mg <- kruskal.test(Abundance ~ LandCover1, data = nutrient_Mg)
+print("Kruskal-Wallis Test Result for Mg:")
+print(kruskal_Mg)
 
 
+dunn_Mg <- dunn.test(nutrient_Mg$Abundance, nutrient_Mg$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_Mg)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient K
+
+```{r}
+nutrient_K <- A_macros_long %>%
+  filter(Nutrient == "K") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for K
+kruskal_K <- kruskal.test(Abundance ~ LandCover1, data = nutrient_K)
+print("Kruskal-Wallis Test Result for K:")
+print(kruskal_K)
+
+dunn_K <- dunn.test(nutrient_K$Abundance, nutrient_K$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_K)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient P
+
+```{r}
+nutrient_P <- A_macros_long %>%
+  filter(Nutrient == "P") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for P
+kruskal_P <- kruskal.test(Abundance ~ LandCover1, data = nutrient_P)
+print("Kruskal-Wallis Test Result for P:")
+print(kruskal_P)
+
+dunn_P <- dunn.test(nutrient_P$Abundance, nutrient_P$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_P)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient S
+
+```{r}
+nutrient_S <- A_macros_long %>%
+  filter(Nutrient == "S") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for S
+kruskal_S <- kruskal.test(Abundance ~ LandCover1, data = nutrient_S)
+print("Kruskal-Wallis Test Result for S:")
+print(kruskal_S)
+
+dunn_S <- dunn.test(nutrient_S$Abundance, nutrient_S$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_S)
 
 
-
-
+```
 
 
 
