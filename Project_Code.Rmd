@@ -804,10 +804,6 @@ plot(prism_p)
 ```
 
 ```{r}
-# Define the coordinates (e.g., New York City)
-lat <- 40.7128
-lon <- -74.0060
-
 A_macros$Longitude <- as.numeric(A_macros$Longitude)
 A_macros$Latitude <- as.numeric(A_macros$Latitude)
 
