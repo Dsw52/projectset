@@ -35,6 +35,8 @@ library(viridis)
 library(broom)
 library(tidyr)
 library(e1071)
+library(prism)
+library(terra)
 ```
 
 # Wrangling
@@ -771,6 +773,32 @@ print(shapiro_results_double_log)
 
 ## Linear Regression
 
-## Confidence Interval
+### Download mean temperature and precipitation data as potential independent
+### variables in the multiple linear regression.
+```{r}
+# Set download directory
+prism_set_dl_dir('./Data')
+# Download temperature data for a specific region
+get_prism_normals(type = "tmean", 
+                resolution = "4km",  # 4km spatial resolution (choose "4km" or "800m")
+                #mon = 1:12,
+                annual = TRUE,
+                keepZip = FALSE)
 
+get_prism_normals(type = "ppt", 
+                resolution = "4km",  # 4km spatial resolution (choose "4km" or "800m")
+                #mon = 1:12,
+                annual = TRUE,
+                keepZip = FALSE)
+```
+
+```{r}
+prism_t <- rast("./Data/PRISM_tmean_30yr_normal_4kmM5_annual_bil/PRISM_tmean_30yr_normal_4kmM5_annual_bil.bil")
+prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_normal_4kmM4_annual_bil.bil")
+```
+
+```{r}
+plot(prism_t)
+plot(prism_p)
+```
 
