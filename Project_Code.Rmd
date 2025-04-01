@@ -37,6 +37,7 @@ library(tidyr)
 library(e1071)
 library(prism)
 library(terra)
+library(sp)
 ```
 
 # Wrangling
@@ -153,7 +154,7 @@ ggsave(Nut_by_state_bar_noP,
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
-  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
+  select(SiteID, StateID, CollDate, Longitude, Latitude, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
   rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
@@ -800,5 +801,26 @@ prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_no
 ```{r}
 plot(prism_t)
 plot(prism_p)
+```
+
+```{r}
+# Define the coordinates (e.g., New York City)
+lat <- 40.7128
+lon <- -74.0060
+
+crs(prism_t)
+
+point_wgs84 <- vect(cbind(lon, lat), crs = "EPSG:4326")
+crs(point_wgs84)
+point_nad83 <- project(point_wgs84, crs(prism_t))
+
+# Create a spatial point
+point <- c(lon, lat)
+
+# Extract the value at the point from the raster
+value_at_point <- extract(prism_t, point_nad83)
+
+# Print the extracted value (e.g., temperature, precipitation, etc.)
+print(value_at_point)
 ```
 
