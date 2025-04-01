@@ -1034,7 +1034,6 @@ print(points_nad83)
 
 extracted_t <- extract(prism_t, points_nad83)
 extracted_p <- extract(prism_p, points_nad83)
-print(extracted_values)
 
 A_macros_tp <- A_macros %>%
   mutate(temperature = extracted_t,
