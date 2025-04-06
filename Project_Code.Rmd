@@ -238,6 +238,20 @@ macronutrient_box <- ggplot(A_macros_long, aes(x = Nutrient, y = Abundance, fill
   scale_y_log10()
 macronutrient_box
 
+annotations <- data.frame(
+  Nutrient = rep(c("C", "Ca", "K", "Mg", "P", "S"), each = 4),  # 3 annotations per facet
+  x = c(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+        1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4),  # x positions for each annotation in the respective facet
+  y = c(80, 80, 80, 80, 80, 80, 80, 80,
+        8, 8, 8, 8, 5, 5, 5, 5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),  # y positions for each annotation
+  label = c("a", "b", "a", "a", 
+            "a", "b", "b", "c",
+            "a", "b", "a", "a",
+            "a", "b", "b", "a",
+            "a", "b", "b", "b",
+            "a", "b", "b", "c"))  # Text for each annotation
+  
 # Boxplots by Nutrients
 macronutrient_box1 <- ggplot(A_macros_long, aes(x = LandCover1, y = Abundance, fill = Nutrient))+
   geom_boxplot() +
@@ -249,9 +263,17 @@ macronutrient_box1 <- ggplot(A_macros_long, aes(x = LandCover1, y = Abundance, f
        title = "Distribution of Soil Macronutrients by Land Cover Type") +
   scale_fill_viridis(discrete = TRUE) +
   scale_y_log10() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  scale_x_discrete(labels = c("Developed" = "Developed", 
+                              "Forested Upland" = "Forested",
+                              "Herbaceous Upland" = "Herbaceous",
+                              "Planted/Cultivated" = "Cultivated")) +
+  geom_text(data = annotations, aes(x = x, y = y, label = label), inherit.aes = FALSE, size = 4, color = "red")
 macronutrient_box1
+
+ggsave("macronutrient_boxplot_annotated.png", plot = macronutrient_box1, width = 10, height = 6, units = "in")
 ```
+
 
 ## Figure 4: Site map
 
