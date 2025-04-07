@@ -154,7 +154,7 @@ ggsave(Nut_by_state_bar_noP,
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
-  select(SiteID, StateID, CollDate, Longitude, Latitude, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
+  select(SiteID, StateID, CollDate, Longitude, Latitude, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P, A_Tot_Clay) %>%
   rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
@@ -943,6 +943,107 @@ extracted_p <- extract(prism_p, points_nad83)
 
 A_macros_tp <- A_macros %>%
   mutate(temperature = extracted_t,
-         precipitation = extracted_p)
+         precipitation = extracted_p) %>%
+  rename(clay = A_Tot_Clay,
+         depth = A_Depth)
+```
+
+## Multiple Linear Regression
+### C
+
+```{r}
+# convert Depth to average depth
+A_macros_tp <- A_macros_tp %>%
+  mutate(avg_depth = sapply(strsplit(as.character(depth), "-"), 
+                            function(x) mean(as.numeric(x)))) %>%
+# tidy clay percentage data
+  mutate(clay = na_if(clay, "N.D."),
+         clay = as.numeric(clay)) %>%
+  filter(LandCover1 != "Non-Natural Woody" & 
+         LandCover1 != "Shrubland")
+
+A_macros_tp_C <- A_macros_tp %>%
+  select(C, 
+         LandCover1,
+         clay, 
+         avg_depth)
+
+A_macros_tp_C$temperature <- A_macros_tp$temperature$PRISM_tmean_30yr_normal_4kmM5_annual_bil
+A_macros_tp_C$precipitation <- A_macros_tp$precipitation$PRISM_ppt_30yr_normal_4kmM4_annual_bil
+```
+
+#### View correlation
+```{r}
+# Pivot all independent variables but not the dependent variable.
+A_macros_tp_C_long <- A_macros_tp_C %>%
+  select(C, 
+         clay, 
+         avg_depth,
+         temperature,
+         precipitation) %>%
+pivot_longer(names_to = "variable", cols = -C, values_to = "value")
+
+# Create and examine an initial scatterplot of data.
+ggplot(A_macros_tp_C_long, aes(x = value, y = C, color = variable)) +
+geom_point() +
+facet_wrap(~variable, scales = "free_x") +
+theme_minimal() +
+theme(legend.position = "none") +
+labs(title = "Scatterplots of Each Independent Var v.s. Dependent Var",
+x = "Independent Variable (Name in Subtitles)",
+y = "Total Recreation Acreage")
+
+# Correlation matrix
+A_macros_tp_C1 <- A_macros_tp_C %>%
+  select(C, clay, avg_depth, temperature, precipitation) %>%
+  na.omit()
+cor_matrix_C <- cor(A_macros_tp_C1)
+
+View(cor_matrix_C)
+
+```
+
+#### Model Building
+```{r}
+# Set Landcover column to be a factor with a reference level of Forested.
+A_macros_tp_C$LandCover1 <- factor(A_macros_tp_C$LandCover1,
+                             levels = c("Forested Upland", "Developed", 
+                                        "Planted/Cultivated", "Herbaceous Upland"))
+```
+
+
+```{r}
+C.mlm1 <- lm(C ~ clay + avg_depth +
+               temperature + precipitation +
+               LandCover1,
+             data = A_macros_tp_C)
+
+summary(C.mlm1)
+
+plot(C.mlm1)
+```
+
+#### log transformed data
+
+```{r}
+A_macros_tp_C_log <- A_macros_tp_C %>%
+  mutate(C_log = log(C),
+         clay_log = log(clay),
+         temp_log = log(temperature),
+         precip_log = log(precipitation),
+         depth_log = log(avg_depth))
+```
+
+#### Refit with log-transformed data
+
+```{r}
+C.mlm1 <- lm(C_log ~ clay_log + depth_log +
+               temp_log + precip_log +
+               LandCover1,
+             data = A_macros_tp_C_log)
+
+summary(C.mlm1)
+
+plot(C.mlm1)
 ```
 
