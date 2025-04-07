@@ -916,8 +916,14 @@ prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_no
 ```
 
 ```{r}
-plot(prism_t)
-plot(prism_p)
+plot(prism_t,
+     main = "Average Annual Temperature °C",
+     xlab = "Longitude",
+     ylab = "Latitude")
+plot(prism_p,
+     main = "Annual Precipitation (mm)",
+     xlab = "Longitude",
+     ylab = "Latitude")
 ```
 
 ```{r}
