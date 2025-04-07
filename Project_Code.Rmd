@@ -1037,13 +1037,68 @@ A_macros_tp_C_log <- A_macros_tp_C %>%
 #### Refit with log-transformed data
 
 ```{r}
-C.mlm1 <- lm(C_log ~ clay_log + depth_log +
+C.mlm2 <- lm(C_log ~ clay_log + depth_log +
                temp_log + precip_log +
                LandCover1,
              data = A_macros_tp_C_log)
 
-summary(C.mlm1)
+summary(C.mlm2)
 
-plot(C.mlm1)
+plot(C.mlm2)
 ```
+
+#### Model visualization
+
+```{r}
+# Simulate temp and precip data
+temp_vector <- rep(seq(from = 10, to = 30), 4)
+precip_vector <-rep(seq(from = 800, to = 2000, length.out = 21), 4)
+clay_vector <-rep(seq(from = 0.1, to = 40, length.out = 21), 4)
+depth_vector <-rep(seq(from = 5, to = 35, length.out = 21), 4)
+
+temp_vector_log = log(temp_vector)
+precip_vector_log = log(precip_vector)
+clay_vector_log = log(clay_vector)
+depth_vector_log = log(depth_vector)
+
+# Simulate landcover data.
+land_vector <- c(rep("Forested Upland", 21),
+                 rep("Developed", 21),
+                 rep("Planted/Cultivated", 21),
+                 rep("Herbaceous Upland", 21))
+
+# Join with continuous data.
+data_pred <- data.frame(temp_vector_log, precip_vector_log, clay_vector_log, depth_vector_log, land_vector)
+colnames(data_pred) <- c("temp_log", "precip_log", "clay_log", "depth_log", "LandCover1")
+
+# Use the original model to predict outcomes.
+prediction <- predict(C.mlm2,
+newdata = data_pred,
+type = "response",
+se.fit = TRUE)
+
+# Pull out predictions.
+data_fig <- data.frame(data_pred,
+prediction$fit,
+prediction$se.fit)
+
+# Rename columns.
+colnames(data_fig) <- c("temp_log", "precip_log", "clay_log", "depth_log", "LandCover1", "probability", "se")
+
+# Graph the probabilities of getting a whole tail.
+model_C_fig <- ggplot(data_fig, aes(x = depth_log,
+                                    y = probability)) +
+               geom_line(aes(color = LandCover1)) +
+               geom_ribbon(aes(ymin = probability - se,
+                               ymax = probability + se,
+                               fill = LandCover1), alpha = 0.3) +
+               labs(title = "Effects of Land Cover Types on Soil Carbon Content",
+                    x = "Log Average Depth", y = "Predicted Log C Content",
+                    color = "LandCover1", fill = "LandCover1") +
+               theme_bw()
+
+ggsave("Carbon_model.png", plot = model_C_fig, width = 8, height = 6)
+```
+
+
 
