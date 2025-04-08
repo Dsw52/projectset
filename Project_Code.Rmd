@@ -35,6 +35,9 @@ library(viridis)
 library(broom)
 library(tidyr)
 library(e1071)
+library(prism)
+library(terra)
+library(sp)
 ```
 
 # Wrangling
@@ -97,7 +100,8 @@ ggsave(landcover_count,
 A_states$A_C_Tot <- as.numeric(A_states$A_C_Tot)
 A_states$A_Ca <- as.numeric(A_states$A_Ca)
 A_states$A_Mg <- as.numeric(A_states$A_Mg)
-A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs)  # Use A_Tot_K_fs instead of A_Kaolinit
+#A_states$A_Tot_K_fs <- as.numeric(A_states$A_Tot_K_fs) # Use A_Tot_K_fs instead of A_Kaolinit
+A_states$A_K <- as.numeric(A_states$A_K) # No, we should use A_K instead of A_Tot_K_fs
 A_states$A_P <- as.numeric(A_states$A_P)
 A_states$A_S <- as.numeric(A_states$A_S)
 A_states <- A_states %>%
@@ -105,7 +109,7 @@ A_states <- A_states %>%
 
 # Now reshape the data into long format for plotting
 A_states_long <- A_states %>%
-  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_Tot_K_fs, A_P, A_S),
+  pivot_longer(cols = c(A_C_Tot, A_Ca, A_Mg, A_K, A_P, A_S),
                names_to = "Nutrient", values_to = "Abundance")
 
 # Sum the abundances by nutrient
@@ -145,28 +149,13 @@ ggsave(Nut_by_state_bar_noP,
        units = "cm")
 ```
 
-## Figure 3: Nutrient status by land use type
-```{r}
-# Examine nutrients and landstatus occurence
- trout_fig3 <- ggplot(A_states, aes(x = A_Ca, fill = LandCover1)) + # base plot
-  geom_histogram() + # creates histograms
-  scale_fill_manual(values = c("darkorange", "purple", "cyan4","green4","red4", "pink3")) + # customize colors
-  labs(x = "Occurence of Ca (% wt)",
-       y = "Count") + # edits labels
-  facet_grid(.~LandCover1) + # facets by reach to avoid overlap
-  theme_bw() + # removes the grey background
-  theme(legend.position = "none") # removes the legend
-
-# View figure.
-trout_fig3
-```
-
+# Original bar plots (Now I think the boxplots underneath look better)
 ```{r}
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
-  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg, A_P) %>%
-  rename(K = A_Tot_K_fs,
+  select(SiteID, StateID, CollDate, Longitude, Latitude, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg, A_P, A_Tot_Clay) %>%
+  rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
          C = A_C_Tot,
@@ -184,8 +173,8 @@ A_macros_sum <- A_macros_long %>%
 
 #without P
 A_macros_noP <- A_states %>%
-  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_Tot_K_fs, A_Ca, A_S, A_C_Tot, A_Mg) %>%
-  rename(K = A_Tot_K_fs,
+  select(SiteID, StateID, CollDate, LandCover1, LandCover2, A_Depth, A_K, A_Ca, A_S, A_C_Tot, A_Mg) %>%
+  rename(K = A_K,
          Ca = A_Ca,
          S = A_S,
          C = A_C_Tot,
@@ -231,104 +220,67 @@ ggsave(nutrient_ls_bar_noP,
        units = "cm")
 ```
 
-# Mean macronutrients by land cover type
+# Macronutrients boxplots by land cover type
 ```{r}
-A_macros_mean <- A_macros_long %>%
-  group_by(StateID, LandCover1, Nutrient) %>%
-  summarize(Mean_Abundance = mean(Abundance, na.rm = TRUE))
+A_macros_long <- A_macros_long %>%
+  filter(LandCover1 != "Non-Natural Woody" & 
+         LandCover1 != "Shrubland")
 
-nutrient_ls_bar <- ggplot(A_macros_mean, aes(x = Nutrient, y = Mean_Abundance, fill = Nutrient))+
-  geom_bar(stat = "identity", .groups = "drop")+
+macronutrient_box <- ggplot(A_macros_long, aes(x = Nutrient, y = Abundance, fill = Nutrient))+
+  geom_boxplot() +
+  #geom_bar(stat = "identity", .groups = "drop")+
   facet_wrap(vars(LandCover1), nrow = 2)+
   theme_bw()+ 
   labs(x = "Nutrient",
-       y = "Mean Abundance (% Weight)",
-       title = "Soil Macronutrient Totals by Land Status Type")+
-  scale_fill_viridis(discrete = TRUE)
-nutrient_ls_bar
+       y = "Abundance (% Weight)",
+       title = "Distribution of Soil Macronutrients by Land Cover Type") +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_y_log10()
+macronutrient_box
+
+annotations <- data.frame(
+  Nutrient = rep(c("C", "Ca", "K", "Mg", "P", "S"), each = 4),  # 3 annotations per facet
+  x = c(1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4,
+        1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4),  # x positions for each annotation in the respective facet
+  y = c(80, 80, 80, 80, 80, 80, 80, 80,
+        8, 8, 8, 8, 5, 5, 5, 5,
+        0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5),  # y positions for each annotation
+  label = c("a", "b", "a", "a", 
+            "a", "b", "b", "c",
+            "a", "b", "a", "a",
+            "a", "b", "b", "a",
+            "a", "b", "b", "b",
+            "a", "b", "b", "c"))  # Text for each annotation
+  
+# Boxplots by Nutrients
+macronutrient_box1 <- ggplot(A_macros_long, aes(x = LandCover1, y = Abundance, fill = Nutrient))+
+  geom_boxplot() +
+  #geom_bar(stat = "identity", .groups = "drop")+
+  facet_wrap(vars(Nutrient), nrow = 2, scales = "free_y")+
+  theme_bw()+ 
+  labs(x = "Land Cover Type",
+       y = "Abundance (% Weight)",
+       title = "Distribution of Soil Macronutrients by Land Cover Type") +
+  scale_fill_viridis(discrete = TRUE) +
+  scale_y_log10() +
+  theme(legend.position = "none") +
+  scale_x_discrete(labels = c("Developed" = "Developed", 
+                              "Forested Upland" = "Forested",
+                              "Herbaceous Upland" = "Herbaceous",
+                              "Planted/Cultivated" = "Cultivated")) +
+  geom_text(data = annotations, aes(x = x, y = y, label = label), inherit.aes = FALSE, size = 4, color = "red")
+macronutrient_box1
+
+ggsave("macronutrient_boxplot_annotated.png", plot = macronutrient_box1, width = 10, height = 6, units = "in")
 ```
 
-
-```{r}
-trout_fig4 <- ggplot() +
-  # add raw data points
-  geom_jitter(data = A_states,
-              aes(x = LandCover1, y = A_K,
-                  color = LandCover1), size = 0.5) +
-  # edit colors
-  scale_color_manual(values = c("darkorange", "purple", "cyan4", "blue", "lightgreen","red" )) +
-  # label axes
-  #labs(x = "Reach Section",
-       #y = "Snout-to-fork Length (mm)") +
-  # remove grey bg
-  theme_bw() +
-  theme(legend.position = "none")
-
-trout_fig4
-```
 
 ## Figure 4: Site map
-### method (1): leaflet map
+
 ```{r}
+# Make long & lat numeric
 A_states$Longitude <- as.numeric(A_states$Longitude)
 A_states$Latitude <- as.numeric(A_states$Latitude)
-
-pal <- colorFactor(
-  palette = c("darkorange", "darkgreen", "cyan4", "blue", "brown","purple"),
-  domain = A_states$LandCover1
-)
-
-# Create the map
-map <- leaflet(A_states) %>%
-  # Add base map tiles
-  addTiles() %>%
-  # Set the initial view to center on your data
-  setView(
-    lng = mean(A_states$Longitude),
-    lat = mean(A_states$Latitude),
-    zoom = 5
-  ) %>%
-  # Add markers for each point
-  addCircleMarkers(
-    lng = ~Longitude,
-    lat = ~Latitude,
-    radius = 2,
-    #radius = ~value/5,    # Size based on value
-    #popup = ~paste("<b>", name, "</b><br>Category: ", category, "<br>Value: ", value),
-    #label = ~name,
-    color = ~pal(LandCover1),
-    #fillOpacity = 0.8,
-    stroke = TRUE,
-    weight = 1
-  ) %>%
-  # Add a legend
-  addLegend(
-    position = "bottomright",
-    pal = pal,
-    values = ~LandCover1,
-    title = "Land Cover Type",
-    #opacity = 0.7
-  )
-
-# Display the map
-map
-
-# First save as HTML
-temp_html <- tempfile(fileext = ".html")
-saveWidget(map, file = temp_html, selfcontained = TRUE)
-
-# Then convert to PNG
-webshot2::webshot(
-  url = temp_html,
-  file = "site_map.png",
-  delay = 5,  # Wait for map to fully load
-  zoom = 2    # For higher resolution
-)
-
-```
-
-### method (2): ggspatial
-```{r}
 # Convert to sf object
 points_sf <- st_as_sf(A_states, coords = c("Longitude", "Latitude"), crs = 4326)
 
@@ -374,6 +326,210 @@ print(map)
 ggsave("site_map_uniform.png", map, dpi = 300)
 
 ```
+
+# Confidence Interval
+
+```{r}
+# filter the dataset by four land cover types
+forest_macro <- A_macros %>%
+  filter(LandCover1 == "Forested Upland")
+
+developed_macro <- A_macros %>%
+  filter(LandCover1 == "Developed")
+
+herbaceous_macro <- A_macros %>%
+  filter(LandCover1 == "Herbaceous Upland")
+
+cultivated_macro <- A_macros %>%
+  filter(LandCover1 == "Planted/Cultivated")
+
+A_macros_4 <- A_macros %>%
+  filter(LandCover1 != "Non-Natural Woody" & 
+         LandCover1 != "Shrubland")
+```
+
+### Calculate 95% CI for each macronutrient by land cover
+```{r}
+# Carbon
+forest_C_test <- t.test(forest_macro$C, conf.level = 0.95)
+
+forest_C_test
+
+developed_C_test <- t.test(developed_macro$C, conf.level = 0.95)
+
+developed_C_test
+
+herbaceous_C_test <- t.test(herbaceous_macro$C, conf.level = 0.95)
+
+herbaceous_C_test
+
+cultivated_C_test <- t.test(cultivated_macro$C, conf.level = 0.95)
+
+cultivated_C_test
+
+C_summary <- A_macros_4 %>%
+             group_by(LandCover1) %>%
+             summarize(mean_C = mean(C, na.rm = TRUE),
+                       sd = sd(C, na.rm = TRUE),
+                       CI95_lower = t.test(C, conf.level = 0.95)$conf.int[1],
+                       CI95_upper = t.test(C, conf.level = 0.95)$conf.int[2]) %>%
+             ungroup()
+
+# View
+C_summary
+```
+
+```{r}
+# Ca
+forest_Ca_test <- t.test(forest_macro$Ca, conf.level = 0.95)
+
+forest_Ca_test
+
+developed_Ca_test <- t.test(developed_macro$Ca, conf.level = 0.95)
+
+developed_Ca_test
+
+herbaceous_Ca_test <- t.test(herbaceous_macro$Ca, conf.level = 0.95)
+
+herbaceous_Ca_test
+
+cultivated_Ca_test <- t.test(cultivated_macro$Ca, conf.level = 0.95)
+
+cultivated_Ca_test
+
+Ca_summary <- A_macros_4 %>%
+             group_by(LandCover1) %>%
+             summarize(mean_S = mean(Ca, na.rm = TRUE),
+                       sd = sd(Ca, na.rm = TRUE),
+                       CI95_lower = t.test(Ca, conf.level = 0.95)$conf.int[1],
+                       CI95_upper = t.test(Ca, conf.level = 0.95)$conf.int[2]) %>%
+             ungroup()
+
+# View
+Ca_summary
+```
+
+```{r}
+# K
+forest_K_test <- t.test(forest_macro$K, conf.level = 0.95)
+
+forest_K_test
+
+developed_K_test <- t.test(developed_macro$K, conf.level = 0.95)
+
+developed_K_test
+
+herbaceous_K_test <- t.test(herbaceous_macro$K, conf.level = 0.95)
+
+herbaceous_K_test
+
+cultivated_K_test <- t.test(cultivated_macro$K, conf.level = 0.95)
+
+cultivated_K_test
+
+K_summary <- A_macros_4 %>%
+             group_by(LandCover1) %>%
+             summarize(mean_K = mean(K, na.rm = TRUE),
+                       sd = sd(K, na.rm = TRUE),
+                       CI95_lower = t.test(K, conf.level = 0.95)$conf.int[1],
+                       CI95_upper = t.test(K, conf.level = 0.95)$conf.int[2]) %>%
+             ungroup()
+
+# View
+K_summary
+```
+
+```{r}
+# Mg
+forest_Mg_test <- t.test(forest_macro$Mg, conf.level = 0.95)
+
+forest_Mg_test
+
+developed_Mg_test <- t.test(developed_macro$Mg, conf.level = 0.95)
+
+developed_Mg_test
+
+herbaceous_Mg_test <- t.test(herbaceous_macro$Mg, conf.level = 0.95)
+
+herbaceous_Mg_test
+
+cultivated_Mg_test <- t.test(cultivated_macro$Mg, conf.level = 0.95)
+
+cultivated_Mg_test
+
+Mg_summary <- A_macros_4 %>%
+             group_by(LandCover1) %>%
+             summarize(mean_Mg = mean(Mg, na.rm = TRUE),
+                       sd = sd(Mg, na.rm = TRUE),
+                       CI95_lower = t.test(Mg, conf.level = 0.95)$conf.int[1],
+                       CI95_upper = t.test(Mg, conf.level = 0.95)$conf.int[2]) %>%
+             ungroup()
+
+# View
+Mg_summary
+```
+
+```{r}
+# P
+forest_P_test <- t.test(forest_macro$P, conf.level = 0.95)
+
+forest_P_test
+
+developed_P_test <- t.test(developed_macro$P, conf.level = 0.95)
+
+developed_P_test
+
+herbaceous_P_test <- t.test(herbaceous_macro$P, conf.level = 0.95)
+
+herbaceous_P_test
+
+cultivated_P_test <- t.test(cultivated_macro$P, conf.level = 0.95)
+
+cultivated_P_test
+
+P_summary <- A_macros_4 %>%
+             group_by(LandCover1) %>%
+             summarize(mean_P = mean(P, na.rm = TRUE),
+                       sd = sd(P, na.rm = TRUE),
+                       CI95_lower = t.test(P, conf.level = 0.95)$conf.int[1],
+                       CI95_upper = t.test(P, conf.level = 0.95)$conf.int[2]) %>%
+             ungroup()
+
+# View
+P_summary
+```
+
+```{r}
+# S
+forest_S_test <- t.test(forest_macro$S, conf.level = 0.95)
+
+forest_S_test
+
+developed_S_test <- t.test(developed_macro$S, conf.level = 0.95)
+
+developed_S_test
+
+herbaceous_S_test <- t.test(herbaceous_macro$S, conf.level = 0.95)
+
+herbaceous_S_test
+
+cultivated_S_test <- t.test(cultivated_macro$S, conf.level = 0.95)
+
+cultivated_S_test
+
+S_summary <- A_macros_4 %>%
+             group_by(LandCover1) %>%
+             summarize(mean_S = mean(S, na.rm = TRUE),
+                       sd = sd(S, na.rm = TRUE),
+                       CI95_lower = t.test(S, conf.level = 0.95)$conf.int[1],
+                       CI95_upper = t.test(S, conf.level = 0.95)$conf.int[2]) %>%
+             ungroup()
+
+# View
+S_summary
+```
+
+
 
 # Assessing Normality 
 
@@ -622,16 +778,111 @@ print(shapiro_results_double_log)
 
 ```
 
+## Kruskal Wallis and Dunn Tests
+
+#### Kruskal-Wallis and Dunn's Test for Nutrient C
+
+```{r Kruskal-Wallis and Dunn's Test for Nutrient C}
+nutrient_C <- A_macros_long %>%
+  filter(Nutrient == "C") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for C
+kruskal_C <- kruskal.test(Abundance ~ LandCover1, data = nutrient_C)
+print("Kruskal-Wallis Test Result for C:")
+print(kruskal_C)
+
+dunn_C <- dunn.test(nutrient_C$Abundance, nutrient_C$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_C)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient Ca
+
+```{r Kruskal-Wallis and Dunn's Test for Nutrient Ca}
+nutrient_Ca <- A_macros_long %>%
+  filter(Nutrient == "Ca") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for Ca
+kruskal_Ca <- kruskal.test(Abundance ~ LandCover1, data = nutrient_Ca)
+print("Kruskal-Wallis Test Result for Ca:")
+print(kruskal_Ca)
+
+dunn_Ca <- dunn.test(nutrient_Ca$Abundance, nutrient_Ca$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_Ca)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient Mg
+
+```{r Kruskal-Wallis and Dunn's Test for Nutrient Mg}
+nutrient_Mg <- A_macros_long %>%
+  filter(Nutrient == "Mg") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for Mg
+kruskal_Mg <- kruskal.test(Abundance ~ LandCover1, data = nutrient_Mg)
+print("Kruskal-Wallis Test Result for Mg:")
+print(kruskal_Mg)
 
 
+dunn_Mg <- dunn.test(nutrient_Mg$Abundance, nutrient_Mg$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_Mg)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient K
+
+```{r Kruskal-Wallis and Dunn's Test for Nutrient K}
+nutrient_K <- A_macros_long %>%
+  filter(Nutrient == "K") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for K
+kruskal_K <- kruskal.test(Abundance ~ LandCover1, data = nutrient_K)
+print("Kruskal-Wallis Test Result for K:")
+print(kruskal_K)
+
+dunn_K <- dunn.test(nutrient_K$Abundance, nutrient_K$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_K)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient P
+
+```{r Kruskal-Wallis and Dunn's Test for Nutrient P}
+nutrient_P <- A_macros_long %>%
+  filter(Nutrient == "P") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for P
+kruskal_P <- kruskal.test(Abundance ~ LandCover1, data = nutrient_P)
+print("Kruskal-Wallis Test Result for P:")
+print(kruskal_P)
+
+dunn_P <- dunn.test(nutrient_P$Abundance, nutrient_P$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_P)
+
+```
+
+### Kruskal-Wallis and Dunn's Test for Nutrient S
+
+```{r Kruskal-Wallis and Dunn's Test for Nutrient S}
+nutrient_S <- A_macros_long %>%
+  filter(Nutrient == "S") %>%
+  na.omit()
+
+# Run Kruskal-Wallis test for S
+kruskal_S <- kruskal.test(Abundance ~ LandCover1, data = nutrient_S)
+print("Kruskal-Wallis Test Result for S:")
+print(kruskal_S)
+
+dunn_S <- dunn.test(nutrient_S$Abundance, nutrient_S$LandCover1, kw = TRUE, label = TRUE)
+print(dunn_S)
 
 
-
-
-
-
-
-
+```
 
 
 
@@ -640,4 +891,220 @@ print(shapiro_results_double_log)
 
 ## Linear Regression
 
-## Confidence Interval, T-test
+### Download mean temperature and precipitation data as potential independent
+### variables in the multiple linear regression.
+```{r}
+# Set download directory
+prism_set_dl_dir('./Data')
+# Download temperature data for a specific region
+get_prism_normals(type = "tmean", 
+                resolution = "4km",  # 4km spatial resolution (choose "4km" or "800m")
+                #mon = 1:12,
+                annual = TRUE,
+                keepZip = FALSE)
+
+get_prism_normals(type = "ppt", 
+                resolution = "4km",  # 4km spatial resolution (choose "4km" or "800m")
+                #mon = 1:12,
+                annual = TRUE,
+                keepZip = FALSE)
+```
+
+```{r}
+prism_t <- rast("./Data/PRISM_tmean_30yr_normal_4kmM5_annual_bil/PRISM_tmean_30yr_normal_4kmM5_annual_bil.bil")
+prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_normal_4kmM4_annual_bil.bil")
+```
+
+```{r}
+plot(prism_t,
+     main = "Average Annual Temperature °C",
+     xlab = "Longitude",
+     ylab = "Latitude")
+plot(prism_p,
+     main = "Annual Precipitation (mm)",
+     xlab = "Longitude",
+     ylab = "Latitude")
+```
+
+```{r}
+A_macros$Longitude <- as.numeric(A_macros$Longitude)
+A_macros$Latitude <- as.numeric(A_macros$Latitude)
+
+# Define the coordinates
+coords <- A_macros %>%
+  select(Longitude, Latitude)
+ # rename(x = Longitude, y = Latitude)
+
+coords <- data.frame(coords)
+
+points <- vect(coords, geom=c("Longitude", "Latitude"), crs = "EPSG:4326")
+print(points)
+
+points_nad83 <- project(points, crs(prism_t))
+
+print(points_nad83)
+
+extracted_t <- extract(prism_t, points_nad83)
+extracted_p <- extract(prism_p, points_nad83)
+
+A_macros_tp <- A_macros %>%
+  mutate(temperature = extracted_t,
+         precipitation = extracted_p) %>%
+  rename(clay = A_Tot_Clay,
+         depth = A_Depth)
+```
+
+## Multiple Linear Regression
+### C
+
+```{r}
+# convert Depth to average depth
+A_macros_tp <- A_macros_tp %>%
+  mutate(avg_depth = sapply(strsplit(as.character(depth), "-"), 
+                            function(x) mean(as.numeric(x)))) %>%
+# tidy clay percentage data
+  mutate(clay = na_if(clay, "N.D."),
+         clay = as.numeric(clay)) %>%
+  filter(LandCover1 != "Non-Natural Woody" & 
+         LandCover1 != "Shrubland")
+
+A_macros_tp_C <- A_macros_tp %>%
+  select(C, 
+         LandCover1,
+         clay, 
+         avg_depth)
+
+A_macros_tp_C$temperature <- A_macros_tp$temperature$PRISM_tmean_30yr_normal_4kmM5_annual_bil
+A_macros_tp_C$precipitation <- A_macros_tp$precipitation$PRISM_ppt_30yr_normal_4kmM4_annual_bil
+```
+
+#### View correlation
+```{r}
+# Pivot all independent variables but not the dependent variable.
+A_macros_tp_C_long <- A_macros_tp_C %>%
+  select(C, 
+         clay, 
+         avg_depth,
+         temperature,
+         precipitation) %>%
+pivot_longer(names_to = "variable", cols = -C, values_to = "value")
+
+# Create and examine an initial scatterplot of data.
+ggplot(A_macros_tp_C_long, aes(x = value, y = C, color = variable)) +
+geom_point() +
+facet_wrap(~variable, scales = "free_x") +
+theme_minimal() +
+theme(legend.position = "none") +
+labs(title = "Scatterplots of Each Independent Var v.s. Dependent Var",
+x = "Independent Variable (Name in Subtitles)",
+y = "Total Recreation Acreage")
+
+# Correlation matrix
+A_macros_tp_C1 <- A_macros_tp_C %>%
+  select(C, clay, avg_depth, temperature, precipitation) %>%
+  na.omit()
+cor_matrix_C <- cor(A_macros_tp_C1)
+
+View(cor_matrix_C)
+
+```
+
+#### Model Building
+```{r}
+# Set Landcover column to be a factor with a reference level of Forested.
+A_macros_tp_C$LandCover1 <- factor(A_macros_tp_C$LandCover1,
+                             levels = c("Forested Upland", "Developed", 
+                                        "Planted/Cultivated", "Herbaceous Upland"))
+```
+
+
+```{r}
+C.mlm1 <- lm(C ~ clay + avg_depth +
+               temperature + precipitation +
+               LandCover1,
+             data = A_macros_tp_C)
+
+summary(C.mlm1)
+
+plot(C.mlm1)
+```
+
+#### log transformed data
+
+```{r}
+A_macros_tp_C_log <- A_macros_tp_C %>%
+  mutate(C_log = log(C),
+         clay_log = log(clay),
+         temp_log = log(temperature),
+         precip_log = log(precipitation),
+         depth_log = log(avg_depth))
+```
+
+#### Refit with log-transformed data
+
+```{r}
+C.mlm2 <- lm(C_log ~ clay_log + depth_log +
+               temp_log + precip_log +
+               LandCover1,
+             data = A_macros_tp_C_log)
+
+summary(C.mlm2)
+
+plot(C.mlm2)
+```
+
+#### Model visualization
+
+```{r}
+# Simulate temp and precip data
+temp_vector <- rep(seq(from = 10, to = 30), 4)
+precip_vector <-rep(seq(from = 800, to = 2000, length.out = 21), 4)
+clay_vector <-rep(seq(from = 0.1, to = 40, length.out = 21), 4)
+depth_vector <-rep(seq(from = 5, to = 35, length.out = 21), 4)
+
+temp_vector_log = log(temp_vector)
+precip_vector_log = log(precip_vector)
+clay_vector_log = log(clay_vector)
+depth_vector_log = log(depth_vector)
+
+# Simulate landcover data.
+land_vector <- c(rep("Forested Upland", 21),
+                 rep("Developed", 21),
+                 rep("Planted/Cultivated", 21),
+                 rep("Herbaceous Upland", 21))
+
+# Join with continuous data.
+data_pred <- data.frame(temp_vector_log, precip_vector_log, clay_vector_log, depth_vector_log, land_vector)
+colnames(data_pred) <- c("temp_log", "precip_log", "clay_log", "depth_log", "LandCover1")
+
+# Use the original model to predict outcomes.
+prediction <- predict(C.mlm2,
+newdata = data_pred,
+type = "response",
+se.fit = TRUE)
+
+# Pull out predictions.
+data_fig <- data.frame(data_pred,
+prediction$fit,
+prediction$se.fit)
+
+# Rename columns.
+colnames(data_fig) <- c("temp_log", "precip_log", "clay_log", "depth_log", "LandCover1", "probability", "se")
+
+# Graph the probabilities of getting a whole tail.
+model_C_fig <- ggplot(data_fig, aes(x = depth_log,
+                                    y = probability)) +
+               geom_line(aes(color = LandCover1)) +
+               geom_ribbon(aes(ymin = probability - se,
+                               ymax = probability + se,
+                               fill = LandCover1), alpha = 0.3) +
+               labs(title = "Effects of Land Cover Types on Soil Carbon Content",
+                    x = "Log Average Depth", y = "Predicted Log C Content",
+                    color = "LandCover1", fill = "LandCover1") +
+               theme_bw()
+
+ggsave("Carbon_model.png", plot = model_C_fig, width = 8, height = 6)
+```
+
+
+
