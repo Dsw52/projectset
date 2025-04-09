@@ -38,6 +38,7 @@ library(e1071)
 library(prism)
 library(terra)
 library(sp)
+library(knitr)
 ```
 
 # Wrangling
@@ -129,7 +130,7 @@ Nut_by_state_bar <-ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fi
 
 Nut_by_state_bar_noP <- ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
   geom_bar(stat = "identity", .groups = "drop") +
-  labs(title = "Total Macronutrient Abundance Across States (exluding P)",
+  labs(title = "Total Macronutrient Abundance Across States",
        x = "State",
        y = "Total Abundance (% weight)",
        fill = "Nutrient") +
@@ -233,7 +234,7 @@ macronutrient_box <- ggplot(A_macros_long, aes(x = Nutrient, y = Abundance, fill
   theme_bw()+ 
   labs(x = "Nutrient",
        y = "Abundance (% Weight)",
-       title = "Distribution of Soil Macronutrients by Land Cover Type") +
+       title = "Distribution of Soil Macronutrients by Primary Land Cover") +
   scale_fill_viridis(discrete = TRUE) +
   scale_y_log10()
 macronutrient_box
@@ -260,7 +261,7 @@ macronutrient_box1 <- ggplot(A_macros_long, aes(x = LandCover1, y = Abundance, f
   theme_bw()+ 
   labs(x = "Land Cover Type",
        y = "Abundance (% Weight)",
-       title = "Distribution of Soil Macronutrients by Land Cover Type") +
+       title = "Distribution of Soil Macronutrients by Primary Land Cover") +
   scale_fill_viridis(discrete = TRUE) +
   scale_y_log10() +
   theme(legend.position = "none") +
@@ -272,6 +273,8 @@ macronutrient_box1 <- ggplot(A_macros_long, aes(x = LandCover1, y = Abundance, f
 macronutrient_box1
 
 ggsave("macronutrient_boxplot_annotated.png", plot = macronutrient_box1, width = 10, height = 6, units = "in")
+
+ggsave("macronutrient_boxplot.png", plot = macronutrient_box, width = 10, height = 6, units = "in")
 ```
 
 
@@ -648,10 +651,10 @@ create_histogram <- function(nutrient_name) {
   # creating the histogram plot
   hist_plot <- ggplot(nutrient_data, aes(x = Abundance, fill = LandCover1)) +
     geom_histogram(binwidth = 0.1, color = "black", position = "dodge") +  # Adjust binwidth as needed
-    labs(title = paste("Distribution of", nutrient_name, "Abundance by LandCover1"),
+    labs(title = paste("Distribution of", nutrient_name, "Abundance by Primary Land Cover"),
          x = paste(nutrient_name, "Abundance"),
          y = "Frequency",
-         caption = paste("Figure: Distribution of", nutrient_name, "Abundance by LandCover1")) +
+         caption = paste("Figure: Distribution of", nutrient_name, "Abundance by Primary Land Cover")) +
     scale_fill_manual(values = c("LandCover1_Value1" = "skyblue", "LandCover1_Value2" = "salmon")) +  # Replace with actual values for LandCover1
     theme_minimal() +
     theme(legend.position = "right") + 
@@ -744,7 +747,11 @@ shapiro_results_log <- bind_rows(
 )
 
 print(shapiro_results_log)
+shapiro_results_log1 <- shapiro_results_log %>%
+  select(Nutrient, p_value) # Modify this depending on your actual column names
 
+
+kable(shapiro_results_log1, col.names = c("Nutrient", "P-Value"), caption = "Shapiro-Wilk Test Results for Nutrients")
 ```
 
 ```{r shapiro double log}
@@ -916,14 +923,15 @@ prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_no
 ```
 
 ```{r}
-plot(prism_t,
+temp_plot<- plot(prism_t,
      main = "Average Annual Temperature °C",
      xlab = "Longitude",
      ylab = "Latitude")
-plot(prism_p,
+precipitation_plot <- plot(prism_p,
      main = "Annual Precipitation (mm)",
      xlab = "Longitude",
      ylab = "Latitude")
+
 ```
 
 ```{r}
