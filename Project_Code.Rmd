@@ -1,6 +1,6 @@
-libar---
-title: "Project Code"
-author: "DSW"
+---
+title: "Assessing Influence of Land Cover Type on Soil Nutrient Status in Southeastern U.S."
+author: "Daniel Whitehead, Elizabeth Weyl, and P. Louis Lu"
 date: "2025-03-13"
 output: pdf_document
 ---
@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 # Load packages
-```{r}
+```{r Packages}
 library(here)
 library(tidyverse)
 library(dunn.test)
@@ -60,8 +60,8 @@ View(A_horizon_units)
 
 
 
-# Initial Figures
-```{r}
+# Initial Data
+```{r Initial Data}
 A_states <- A_horizon %>%
   filter(StateID %in% c("NC", "SC", "VA", "GA", "FL"))
 
@@ -71,7 +71,7 @@ head(A_states)
 ```
 
 ## Figure 1: Land Cover Frequency by State
-```{r Figure 1, fig.cap= "Land status sample type in Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database.}
+```{r Figure 1, fig.cap= "Land status sample type in Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database"}
 landcover_counts <- A_states %>%
   group_by(StateID, LandCover1) %>%
   summarize(count = n(), .groups = "drop")
@@ -95,8 +95,8 @@ ggsave(landcover_count,
        units = "cm")
 ```
 
-## Figure 2: (In progress) Total Nutrient Abundance Across States
-```{r}
+## Figure 2: Total Nutrient Abundance Across States
+```{r Total Nutrient Abundance Across States}
 # Convert relevant columns to numeric (direct conversion)
 A_states$A_C_Tot <- as.numeric(A_states$A_C_Tot)
 A_states$A_Ca <- as.numeric(A_states$A_Ca)
@@ -117,41 +117,10 @@ A_states_long <- A_states %>%
 A_states_sum <- A_states_long %>%
   group_by(StateID, Nutrient) %>%
   summarize(Total_Abundance = sum(Abundance, na.rm = TRUE))
-
-# Create a bar chart using ggplot
-Nut_by_state_bar <-ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
-  geom_bar(stat = "identity", .groups = "drop") +
-  labs(title = "Total Macronutrient Abundance Across States",
-       x = "State",
-       y = "Total Abundance (% weight)",
-       fill = "Nutrient") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-Nut_by_state_bar_noP <- ggplot(A_states_sum, aes(x = StateID, y = Total_Abundance, fill = Nutrient)) +
-  geom_bar(stat = "identity", .groups = "drop") +
-  labs(title = "Total Macronutrient Abundance Across States",
-       x = "State",
-       y = "Total Abundance (% weight)",
-       fill = "Nutrient") +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-Nut_by_state_bar
-Nut_by_state_bar_noP
-ggsave(Nut_by_state_bar,
-       filename = "nut_by_state_bar.jpg",
-       height = 12,
-       width = 15,
-       units = "cm")
-ggsave(Nut_by_state_bar_noP,
-       filename = "nut_by_state_bar_noP.jpg",
-       height = 12,
-       width = 17,
-       units = "cm")
 ```
 
-# Original bar plots (Now I think the boxplots underneath look better)
-```{r}
+# Original bar plots 
+```{r Original Bar Plots}
 
 #narrowing the dataset to just macro nutrients
 A_macros <- A_states %>%
@@ -189,40 +158,11 @@ A_macros_sum_noP <- A_macros_long_noP %>%
   group_by(StateID, LandCover1, Nutrient) %>%
   summarize(Total_Abundance = sum(Abundance, na.rm = TRUE))
 
-nutrient_ls_bar <- ggplot(A_macros_sum, aes(x = Nutrient, y = Total_Abundance, fill = Nutrient))+
-  geom_bar(stat = "identity", .groups = "drop")+
-  facet_wrap(vars(LandCover1), nrow = 2)+
-  theme_bw()+ 
-  labs(x = "Nutrient",
-       y = "Total Sum (% Weight)",
-       title = "Soil Macronutrient Totals by Land Status Type")+
-  scale_fill_viridis(discrete = TRUE)
-nutrient_ls_bar
-#  caption = "Figure 1: Soil macronutrient sum values based on Land status type only including data from Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database."
-nutrient_ls_bar_noP <- ggplot(A_macros_sum_noP, aes(x = Nutrient, y = Total_Abundance, fill = Nutrient))+
-  geom_bar(stat = "identity", .groups = "drop")+
-  facet_wrap(vars(LandCover1), nrow = 2)+
-  theme_bw()+ 
-  labs(x = "Nutrient",
-       y = "Total Sum (% Weight)",
-       title = "Soil Macronutrient Totals by Land Status Type (excluding P)")+
-  scale_fill_viridis(discrete = TRUE)
-nutrient_ls_bar_noP
-# caption = "Figure 2: Soil macronutrient sum values, excluding Phosporus to display the lesser occuring macronutrients based on Land status type only including data from Florida, Georgia, North Carolina, South Carolina, and Virginia. This data is from the USGS Geochemical and mineralogical data for soils of the conterminous United States database."
-ggsave(nutrient_ls_bar,
-       filename = "nutrient_ls_bar.jpg",
-       height = 12,
-       width = 15,
-       units = "cm")
-ggsave(nutrient_ls_bar_noP,
-       filename = "nutrient_ls_bar_noP.jpg",
-       height = 12,
-       width = 15,
-       units = "cm")
+
 ```
 
 # Macronutrients boxplots by land cover type
-```{r}
+```{r Boxplots}
 A_macros_long <- A_macros_long %>%
   filter(LandCover1 != "Non-Natural Woody" & 
          LandCover1 != "Shrubland")
@@ -280,7 +220,7 @@ ggsave("macronutrient_boxplot.png", plot = macronutrient_box, width = 10, height
 
 ## Figure 4: Site map
 
-```{r}
+```{r Site Map}
 # Make long & lat numeric
 A_states$Longitude <- as.numeric(A_states$Longitude)
 A_states$Latitude <- as.numeric(A_states$Latitude)
@@ -332,7 +272,7 @@ ggsave("site_map_uniform.png", map, dpi = 300)
 
 # Confidence Interval
 
-```{r}
+```{r Confidence Interval Prep}
 # filter the dataset by four land cover types
 forest_macro <- A_macros %>%
   filter(LandCover1 == "Forested Upland")
@@ -352,7 +292,7 @@ A_macros_4 <- A_macros %>%
 ```
 
 ### Calculate 95% CI for each macronutrient by land cover
-```{r}
+```{r 95% CI}
 # Carbon
 forest_C_test <- t.test(forest_macro$C, conf.level = 0.95)
 
@@ -382,7 +322,7 @@ C_summary <- A_macros_4 %>%
 C_summary
 ```
 
-```{r}
+```{r Calcium ttest}
 # Ca
 forest_Ca_test <- t.test(forest_macro$Ca, conf.level = 0.95)
 
@@ -412,7 +352,7 @@ Ca_summary <- A_macros_4 %>%
 Ca_summary
 ```
 
-```{r}
+```{r K ttest}
 # K
 forest_K_test <- t.test(forest_macro$K, conf.level = 0.95)
 
@@ -442,7 +382,7 @@ K_summary <- A_macros_4 %>%
 K_summary
 ```
 
-```{r}
+```{r Mg Ttest}
 # Mg
 forest_Mg_test <- t.test(forest_macro$Mg, conf.level = 0.95)
 
@@ -472,7 +412,7 @@ Mg_summary <- A_macros_4 %>%
 Mg_summary
 ```
 
-```{r}
+```{r P ttest}
 # P
 forest_P_test <- t.test(forest_macro$P, conf.level = 0.95)
 
@@ -502,7 +442,7 @@ P_summary <- A_macros_4 %>%
 P_summary
 ```
 
-```{r}
+```{r S ttest}
 # S
 forest_S_test <- t.test(forest_macro$S, conf.level = 0.95)
 
@@ -574,6 +514,8 @@ normality_results <- bind_rows(
 
 print(normality_results)
 ```
+## Skewness and kurtosis
+
 ```{r skewness and kurtosis}
 abundance_C <- A_macros_long$Abundance[A_macros_long$Nutrient == "C"] %>% na.omit()
 if(length(unique(abundance_C)) > 1) {
@@ -652,7 +594,7 @@ create_histogram <- function(nutrient_name) {
   hist_plot <- ggplot(nutrient_data, aes(x = Abundance, fill = LandCover1)) +
     geom_histogram(binwidth = 0.1, color = "black", position = "dodge") +  # Adjust binwidth as needed
     labs(title = paste("Distribution of", nutrient_name, "Abundance by Primary Land Cover"),
-         x = paste(nutrient_name, "Abundance"),
+         x = paste(nutrient_name, "Abundance by % weight"),
          y = "Frequency",
          caption = paste("Figure: Distribution of", nutrient_name, "Abundance by Primary Land Cover")) +
     scale_fill_manual(values = c("LandCover1_Value1" = "skyblue", "LandCover1_Value2" = "salmon")) +  # Replace with actual values for LandCover1
@@ -694,7 +636,7 @@ create_log_transformed_histogram <- function(nutrient_name) {
   hist_plot <- ggplot(nutrient_data, aes(x = log_Abundance, fill = LandCover1)) +
     geom_histogram(binwidth = 0.1, color = "black", position = "dodge") +  
     labs(title = paste("Log-Transformed Distribution of", nutrient_name, "Abundance by LandCover1"),
-         x = paste("Log-transformed", nutrient_name, "Abundance"),
+         x = paste("Log-transformed", nutrient_name, "Abundance by % weight"),
          y = "Frequency",
          caption = paste("Figure: Log-transformed Distribution of", nutrient_name, "Abundance by LandCover1")) +
     scale_fill_manual(values = c("LandCover1_Value1" = "skyblue", "LandCover1_Value2" = "salmon")) +  # Replace with actual values for LandCover1
@@ -789,7 +731,7 @@ print(shapiro_results_double_log)
 
 #### Kruskal-Wallis and Dunn's Test for Nutrient C
 
-```{r Kruskal-Wallis and Dunn's Test for Nutrient C}
+```{r Kruskal-Wallis and Dunn Test for Nutrient C}
 nutrient_C <- A_macros_long %>%
   filter(Nutrient == "C") %>%
   na.omit()
@@ -806,7 +748,7 @@ print(dunn_C)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient Ca
 
-```{r Kruskal-Wallis and Dunn's Test for Nutrient Ca}
+```{r Kruskal-Wallis and Dunn Test for Nutrient Ca}
 nutrient_Ca <- A_macros_long %>%
   filter(Nutrient == "Ca") %>%
   na.omit()
@@ -823,7 +765,7 @@ print(dunn_Ca)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient Mg
 
-```{r Kruskal-Wallis and Dunn's Test for Nutrient Mg}
+```{r Kruskal-Wallis and Dunn Test for Nutrient Mg}
 nutrient_Mg <- A_macros_long %>%
   filter(Nutrient == "Mg") %>%
   na.omit()
@@ -841,7 +783,7 @@ print(dunn_Mg)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient K
 
-```{r Kruskal-Wallis and Dunn's Test for Nutrient K}
+```{r Kruskal-Wallis and Dunn Test for Nutrient K}
 nutrient_K <- A_macros_long %>%
   filter(Nutrient == "K") %>%
   na.omit()
@@ -858,7 +800,7 @@ print(dunn_K)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient P
 
-```{r Kruskal-Wallis and Dunn's Test for Nutrient P}
+```{r Kruskal-Wallis and Dunn Test for Nutrient P}
 nutrient_P <- A_macros_long %>%
   filter(Nutrient == "P") %>%
   na.omit()
@@ -875,7 +817,7 @@ print(dunn_P)
 
 ### Kruskal-Wallis and Dunn's Test for Nutrient S
 
-```{r Kruskal-Wallis and Dunn's Test for Nutrient S}
+```{r Kruskal-Wallis and Dunn Test for Nutrient S}
 nutrient_S <- A_macros_long %>%
   filter(Nutrient == "S") %>%
   na.omit()
@@ -898,9 +840,8 @@ print(dunn_S)
 
 ## Linear Regression
 
-### Download mean temperature and precipitation data as potential independent
-### variables in the multiple linear regression.
-```{r}
+## Mean temperature and Precipitation as potential independent variables
+```{r Temp and Precipitation Data}
 # Set download directory
 prism_set_dl_dir('./Data')
 # Download temperature data for a specific region
@@ -917,12 +858,12 @@ get_prism_normals(type = "ppt",
                 keepZip = FALSE)
 ```
 
-```{r}
+```{r Rasterize Data}
 prism_t <- rast("./Data/PRISM_tmean_30yr_normal_4kmM5_annual_bil/PRISM_tmean_30yr_normal_4kmM5_annual_bil.bil")
 prism_p <- rast("./Data/PRISM_ppt_30yr_normal_4kmM4_annual_bil/PRISM_ppt_30yr_normal_4kmM4_annual_bil.bil")
 ```
 
-```{r}
+```{r Plot temp and precipiation}
 temp_plot<- plot(prism_t,
      main = "Average Annual Temperature °C",
      xlab = "Longitude",
@@ -934,7 +875,7 @@ precipitation_plot <- plot(prism_p,
 
 ```
 
-```{r}
+```{r Extracting positions}
 A_macros$Longitude <- as.numeric(A_macros$Longitude)
 A_macros$Latitude <- as.numeric(A_macros$Latitude)
 
@@ -963,9 +904,9 @@ A_macros_tp <- A_macros %>%
 ```
 
 ## Multiple Linear Regression
-### C
+## Carbon
 
-```{r}
+```{r tidying exogenous variables}
 # convert Depth to average depth
 A_macros_tp <- A_macros_tp %>%
   mutate(avg_depth = sapply(strsplit(as.character(depth), "-"), 
@@ -986,8 +927,8 @@ A_macros_tp_C$temperature <- A_macros_tp$temperature$PRISM_tmean_30yr_normal_4km
 A_macros_tp_C$precipitation <- A_macros_tp$precipitation$PRISM_ppt_30yr_normal_4kmM4_annual_bil
 ```
 
-#### View correlation
-```{r}
+### View correlation
+```{r Viewing Correlation}
 # Pivot all independent variables but not the dependent variable.
 A_macros_tp_C_long <- A_macros_tp_C %>%
   select(C, 
@@ -1018,7 +959,7 @@ View(cor_matrix_C)
 ```
 
 #### Model Building
-```{r}
+```{r Model Building}
 # Set Landcover column to be a factor with a reference level of Forested.
 A_macros_tp_C$LandCover1 <- factor(A_macros_tp_C$LandCover1,
                              levels = c("Forested Upland", "Developed", 
@@ -1026,7 +967,7 @@ A_macros_tp_C$LandCover1 <- factor(A_macros_tp_C$LandCover1,
 ```
 
 
-```{r}
+```{r Carbon MLM1}
 C.mlm1 <- lm(C ~ clay + avg_depth +
                temperature + precipitation +
                LandCover1,
@@ -1039,7 +980,7 @@ plot(C.mlm1)
 
 #### log transformed data
 
-```{r}
+```{r Log Transformed Temp and Precip Data}
 A_macros_tp_C_log <- A_macros_tp_C %>%
   mutate(C_log = log(C),
          clay_log = log(clay),
@@ -1050,7 +991,7 @@ A_macros_tp_C_log <- A_macros_tp_C %>%
 
 #### Refit with log-transformed data
 
-```{r}
+```{r Refitting with log data}
 C.mlm2 <- lm(C_log ~ clay_log + depth_log +
                temp_log + precip_log +
                LandCover1,
@@ -1061,9 +1002,9 @@ summary(C.mlm2)
 plot(C.mlm2)
 ```
 
-#### Model visualization
+## Linear Model visualization
 
-```{r}
+```{r LM Visualization}
 # Simulate temp and precip data
 temp_vector <- rep(seq(from = 10, to = 30), 4)
 precip_vector <-rep(seq(from = 800, to = 2000, length.out = 21), 4)

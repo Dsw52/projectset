@@ -1,4 +1,3 @@
-# projectset
-Repo for project set
-# this is a test
-#
+Data description
+The dataset from the United States Geological Survey's North American Soil Geochemical Landscapes Project provides a comprehensive geochemical and mineralogical survey of soils of the conterminous U.S. (Smith et al., 2013; https://pubs.usgs.gov/ds/801/). Soils from 4857 sites across the country were sampled at three depths (0-5 cm surface, A horizon, and C horizon) and analyzed for 45 major elements, trace elements, and major mineral components. The geographic coordinates, date of collection, and land cover type of each soil sample (unit of analysis) were also recorded.
+In this study, our independent variable will be the land cover type at each soil sampling site. This is a discrete two-level categorical variable; each unit has been divided into a major land cover category (e.g. forest upland, developed, etc.) and a subcategory (e.g. deciduous forest, low intensity residential, etc.). The dependent variable of this study will be the concentration of nutrient elements (single elementary form) measured in soil samples. This is a continuous variable with units of weight % or mg/kg depending on whether the element is a macro- or micronutrient.
